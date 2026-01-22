@@ -6,24 +6,24 @@ from decimal import Decimal
 
 # ============== CUSTOMER SCHEMAS ==============
 class CustomerCreate(BaseModel):
-    """Schema para crear un cliente"""
-    nombre: str = Field(..., min_length=1, max_length=100)
-    apellido: str = Field(..., min_length=1, max_length=100)
+    """Schema for creating a customer"""
+    name: str = Field(..., min_length=1, max_length=100)
+    last_name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
 
 
 class CustomerUpdate(BaseModel):
-    """Schema para actualizar un cliente"""
-    nombre: Optional[str] = Field(None, min_length=1, max_length=100)
-    apellido: Optional[str] = Field(None, min_length=1, max_length=100)
+    """Schema for updating a customer"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     email: Optional[EmailStr] = None
 
 
 class CustomerResponse(BaseModel):
-    """Schema de respuesta de cliente"""
+    """Customer response schema"""
     id: int
-    nombre: str
-    apellido: str
+    name: str
+    last_name: str
     email: str
     created_at: datetime
     
@@ -32,34 +32,34 @@ class CustomerResponse(BaseModel):
 
 
 class CustomerWithOrders(CustomerResponse):
-    """Schema de cliente con sus órdenes"""
+    """Customer schema with associated orders"""
     orders: List["OrderResponse"] = []
 
 
 # ============== PRODUCT SCHEMAS ==============
 class ProductCreate(BaseModel):
-    """Schema para crear un producto"""
-    nombre: str = Field(..., min_length=1, max_length=150)
-    descripcion: Optional[str] = Field(None, max_length=500)
-    precio: Decimal = Field(..., decimal_places=2, gt=0)
-    estado: bool = True  # True = activo, False = inactivo
+    """Schema for creating a product"""
+    name: str = Field(..., min_length=1, max_length=150)
+    description: Optional[str] = Field(None, max_length=500)
+    price: Decimal = Field(..., decimal_places=2, gt=0)
+    is_active: bool = True  # True = active, False = inactive
 
 
 class ProductUpdate(BaseModel):
-    """Schema para actualizar un producto"""
-    nombre: Optional[str] = Field(None, min_length=1, max_length=150)
-    descripcion: Optional[str] = Field(None, max_length=500)
-    precio: Optional[Decimal] = Field(None, decimal_places=2, gt=0)
-    estado: Optional[bool] = None
+    """Schema for updating a product"""
+    name: Optional[str] = Field(None, min_length=1, max_length=150)
+    description: Optional[str] = Field(None, max_length=500)
+    price: Optional[Decimal] = Field(None, decimal_places=2, gt=0)
+    is_active: Optional[bool] = None
 
 
 class ProductResponse(BaseModel):
-    """Schema de respuesta de producto"""
+    """Product response schema"""
     id: int
-    nombre: str
-    descripcion: Optional[str]
-    precio: Decimal
-    estado: bool
+    name: str
+    description: Optional[str]
+    price: Decimal
+    is_active: bool
     created_at: datetime
     
     class Config:
@@ -68,20 +68,20 @@ class ProductResponse(BaseModel):
 
 # ============== ORDER ITEM SCHEMAS ==============
 class OrderItemCreate(BaseModel):
-    """Schema para crear un item de orden"""
+    """Schema for creating an order item"""
     product_id: int = Field(..., gt=0)
-    cantidad: int = Field(..., gt=0)
+    quantity: int = Field(..., gt=0)
 
 
 class OrderItemResponse(BaseModel):
-    """Schema de respuesta de item de orden"""
+    """Order item response schema"""
     id: int
     order_id: int
     product_id: int
-    cantidad: int
-    precio_congelado: Decimal
+    quantity: int
+    unit_price: Decimal
     created_at: datetime
-    product: ProductResponse  # Incluir detalles del producto
+    product: ProductResponse  # Include product details
     
     class Config:
         from_attributes = True
@@ -89,22 +89,22 @@ class OrderItemResponse(BaseModel):
 
 # ============== ORDER SCHEMAS ==============
 class OrderCreate(BaseModel):
-    """Schema para crear una orden"""
+    """Schema for creating an order"""
     customer_id: int = Field(..., gt=0)
     items: List[OrderItemCreate] = Field(..., min_items=1)
 
 
 class OrderUpdate(BaseModel):
-    """Schema para actualizar una orden"""
-    estado: Optional[str] = Field(None, pattern="^(draft|confirmed|completed)$")
+    """Schema for updating an order"""
+    status: Optional[str] = Field(None, pattern="^(draft|confirmed|completed)$")
 
 
 class OrderResponse(BaseModel):
-    """Schema de respuesta de orden"""
+    """Order response schema"""
     id: int
     customer_id: int
-    estado: str
-    monto_total: Decimal
+    status: str
+    total_amount: Decimal
     created_at: datetime
     
     class Config:
@@ -112,6 +112,6 @@ class OrderResponse(BaseModel):
 
 
 class OrderWithDetails(OrderResponse):
-    """Schema de orden con detalles completos (items y cliente)"""
+    """Order schema with complete details (items and customer)"""
     customer: CustomerResponse
     items: List[OrderItemResponse]

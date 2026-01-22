@@ -8,24 +8,24 @@ from schemas import CustomerCreate, CustomerUpdate, CustomerResponse, CustomerWi
 router = APIRouter(
     prefix="/api/customers",
     tags=["customers"],
-    responses={404: {"description": "Cliente no encontrado"}},
+    responses={404: {"description": "Customer not found"}},
 )
 
 
 @router.post("/", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
 def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
-    """Crear un nuevo cliente"""
-    # Verificar si el email ya existe
+    """Create a new customer"""
+    # Check if email already exists
     existing_customer = db.query(Customer).filter(Customer.email == customer.email).first()
     if existing_customer:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Ya existe un cliente con el email '{customer.email}'"
+            detail=f"A customer with email '{customer.email}' already exists"
         )
     
     db_customer = Customer(
-        nombre=customer.nombre,
-        apellido=customer.apellido,
+        name=customer.name,
+        last_name=customer.last_name,
         email=customer.email
     )
     db.add(db_customer)
@@ -36,43 +36,43 @@ def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
 
 @router.get("/", response_model=list[CustomerResponse])
 def get_customers(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    """Obtener lista de clientes con paginación"""
+    """Get list of customers with pagination"""
     customers = db.query(Customer).offset(skip).limit(limit).all()
     return customers
 
 
 @router.get("/{customer_id}", response_model=CustomerWithOrders)
 def get_customer(customer_id: int, db: Session = Depends(get_db)):
-    """Obtener un cliente específico por ID con sus órdenes"""
+    """Get a specific customer by ID with their orders"""
     customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not customer:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Cliente con ID {customer_id} no encontrado"
+            detail=f"Customer with ID {customer_id} not found"
         )
     return customer
 
 
 @router.put("/{customer_id}", response_model=CustomerResponse)
 def update_customer(customer_id: int, customer_update: CustomerUpdate, db: Session = Depends(get_db)):
-    """Actualizar un cliente existente"""
+    """Update an existing customer"""
     db_customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not db_customer:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Cliente con ID {customer_id} no encontrado"
+            detail=f"Customer with ID {customer_id} not found"
         )
     
-    # Verificar si el email ya existe (si se intenta cambiar)
+    # Check if email already exists (if trying to change it)
     if customer_update.email and customer_update.email != db_customer.email:
         existing_customer = db.query(Customer).filter(Customer.email == customer_update.email).first()
         if existing_customer:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un cliente con el email '{customer_update.email}'"
+                detail=f"A customer with email '{customer_update.email}' already exists"
             )
     
-    # Actualizar solo los campos que fueron proporcionados
+    # Update only provided fields
     update_data = customer_update.dict(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_customer, field, value)
@@ -86,35 +86,35 @@ def update_customer(customer_id: int, customer_update: CustomerUpdate, db: Sessi
 @router.delete("/{customer_id}", response_model=dict, status_code=status.HTTP_200_OK)
 def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     """
-    Eliminar un cliente de la base de datos.
-    Nota: No es posible eliminar un cliente que tiene órdenes asociadas.
+    Delete a customer from the database.
+    Note: It is not possible to delete a customer that has associated orders.
     """
     db_customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not db_customer:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Cliente con ID {customer_id} no encontrado"
+            detail=f"Customer with ID {customer_id} not found"
         )
     
-    # Verificar si el cliente tiene órdenes asociadas
+    # Check if customer has associated orders
     if db_customer.orders:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"No se puede eliminar el cliente '{db_customer.nombre} {db_customer.apellido}' "
-                   f"porque tiene {len(db_customer.orders)} orden(es) asociada(s). "
-                   f"Debe eliminar o reasignar sus órdenes primero."
+            detail=f"Cannot delete customer '{db_customer.name} {db_customer.last_name}' "
+                   f"because they have {len(db_customer.orders)} associated order(s). "
+                   f"You must delete or reassign their orders first."
         )
     
     try:
         db.delete(db_customer)
         db.commit()
         return {
-            "message": f"Cliente {db_customer.nombre} {db_customer.apellido} eliminado exitosamente",
+            "message": f"Customer {db_customer.name} {db_customer.last_name} deleted successfully",
             "id": db_customer.id
         }
     except IntegrityError as e:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="No se puede eliminar el cliente debido a restricciones de integridad en la base de datos"
+            detail="Cannot delete customer due to database integrity constraints"
         )
