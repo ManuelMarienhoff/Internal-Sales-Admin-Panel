@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, Numeric, DateTime, ForeignKey, Enum, Boolean
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
 
-Base = declarative_base()
+from database import Base
 
 
 class Customer(Base):

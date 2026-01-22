@@ -1,7 +1,11 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from typing import Generator
 
+# ============== CONFIGURACIÓN BASE DEL ORM ==============
+Base = declarative_base()
+
+# ============== CONFIGURACIÓN DE LA BASE DE DATOS ==============
 # URL de conexión a PostgreSQL usando el nombre del servicio Docker
 DATABASE_URL = "postgresql://admin:admin123@db:5432/sales_management"
 
