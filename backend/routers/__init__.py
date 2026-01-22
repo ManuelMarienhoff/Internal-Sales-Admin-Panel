@@ -1,1 +1,1 @@
-# Este archivo permite que la carpeta sea un paquete Python
+# This file allows the folder to be treated as a Python package

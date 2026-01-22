@@ -2,30 +2,31 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from typing import Generator
 
-# ============== CONFIGURACIÓN BASE DEL ORM ==============
+# ============== ORM BASE CONFIGURATION ==============
 Base = declarative_base()
 
-# ============== CONFIGURACIÓN DE LA BASE DE DATOS ==============
-# URL de conexión a PostgreSQL usando el nombre del servicio Docker
+# ============== DATABASE CONFIGURATION ==============
+# PostgreSQL connection URL using Docker service name
 DATABASE_URL = "postgresql://admin:admin123@db:5432/sales_management"
+# TODO: Move sensitive credentials to environment variables (.env file) before production
 
-# Crear el engine
+# Create engine
 engine = create_engine(
     DATABASE_URL,
-    echo=True,  # Mostrar las queries SQL (cambiar a False en producción)
-    pool_pre_ping=True,  # Verificar conexiones antes de usarlas
+    echo=True,  # Show SQL queries (change to False in production)
+    pool_pre_ping=True,  # Verify connections before using them
 )
 
-# Crear el sessionmaker
+# Create sessionmaker
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db() -> Generator[Session, None, None]:
     """
-    Función de inyección de dependencias para obtener la sesión de base de datos.
+    Dependency injection function to get the database session.
     
     Yields:
-        Session: La sesión de SQLAlchemy
+        Session: The SQLAlchemy session
     """
     db = SessionLocal()
     try:
