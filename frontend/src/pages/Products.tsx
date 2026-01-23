@@ -3,11 +3,18 @@ import { productService } from '../services/productService';
 import type { Product } from '../types/product';
 import Table from '../components/ui/Table';
 import type { ColumnDef } from '../components/ui/Table';
+import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import GenericForm from '../components/ui/GenericForm';
+import type { FormField } from '../components/ui/GenericForm';
+
+type ProductFormData = Omit<Product, 'id' | 'created_at'>;
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -61,6 +68,45 @@ const Products = () => {
     },
   ];
 
+  const formFields: FormField[] = [
+    {
+      name: 'name',
+      label: 'Product Name',
+      type: 'text',
+      required: true,
+      placeholder: 'Enter product name',
+    },
+    {
+      name: 'price',
+      label: 'Price',
+      type: 'number',
+      required: true,
+      placeholder: 'Enter price',
+    },
+    {
+      name: 'description',
+      label: 'Description',
+      type: 'textarea',
+      placeholder: 'Enter product description',
+    },
+    {
+      name: 'is_active',
+      label: 'Status',
+      type: 'select',
+      required: true,
+      options: [
+        { value: 'true', label: 'Active' },
+        { value: 'false', label: 'Inactive' },
+      ],
+    },
+  ];
+
+  const handleFormSubmit = (data: ProductFormData) => {
+    console.log('Form Data:', data);
+    setIsModalOpen(false);
+    // TODO: Connect to productService.createProduct() when backend is ready
+  };
+
   if (loading) {
     return (
       <div className="px-12 py-12">
@@ -81,13 +127,32 @@ const Products = () => {
 
   return (
     <div className="px-12 py-12">
-      {/* Title */}
-      <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Products</h1>
+      {/* Header with Title and Button */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-serif font-bold text-pwc-black">Products</h1>
+        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+          New Product
+        </Button>
+      </div>
 
       {/* Table */}
       <Table data={products} columns={columns} emptyMessage="No products found" />
+
+      {/* Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add New Product"
+      >
+        <GenericForm<ProductFormData>
+          fields={formFields}
+          onSubmit={handleFormSubmit}
+          onCancel={() => setIsModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
-};
+}
+
 
 export default Products;

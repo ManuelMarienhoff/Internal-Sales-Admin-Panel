@@ -3,11 +3,18 @@ import { customerService } from '../services/customerService';
 import type { Customer } from '../types/customer';
 import Table from '../components/ui/Table';
 import type { ColumnDef } from '../components/ui/Table';
+import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import GenericForm from '../components/ui/GenericForm';
+import type { FormField } from '../components/ui/GenericForm';
+
+type CustomerFormData = Omit<Customer, 'id' | 'created_at'>;
 
 const Customers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -50,6 +57,36 @@ const Customers = () => {
     },
   ];
 
+  const formFields: FormField[] = [
+    {
+      name: 'name',
+      label: 'First Name',
+      type: 'text',
+      required: true,
+      placeholder: 'Enter first name',
+    },
+    {
+      name: 'last_name',
+      label: 'Last Name',
+      type: 'text',
+      required: true,
+      placeholder: 'Enter last name',
+    },
+    {
+      name: 'email',
+      label: 'Email',
+      type: 'email',
+      required: true,
+      placeholder: 'Enter email address',
+    },
+  ];
+
+  const handleFormSubmit = (data: CustomerFormData) => {
+    console.log('Form Data:', data);
+    setIsModalOpen(false);
+    // TODO: Connect to customerService.createCustomer() when backend is ready
+  };
+
   if (loading) {
     return (
       <div className="px-12 py-12">
@@ -70,11 +107,29 @@ const Customers = () => {
 
   return (
     <div className="px-12 py-12">
-      {/* Title */}
-      <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Customers</h1>
+      {/* Header with Title and Button */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-serif font-bold text-pwc-black">Customers</h1>
+        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+          New Customer
+        </Button>
+      </div>
 
       {/* Table */}
       <Table data={customers} columns={columns} emptyMessage="No customers found" />
+
+      {/* Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add New Customer"
+      >
+        <GenericForm<CustomerFormData>
+          fields={formFields}
+          onSubmit={handleFormSubmit}
+          onCancel={() => setIsModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 };
