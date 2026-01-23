@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
+import Customers from './pages/Customers';
+import Orders from './pages/Orders';
 
 function App() {
   return (
@@ -9,8 +11,8 @@ function App() {
       <Routes>
         <Route element={<Layout><Dashboard /></Layout>} path="/" />
         <Route element={<Layout><Products /></Layout>} path="/products" />
-        <Route element={<Layout><div className="p-12"><h2 className="text-3xl font-serif">Customers</h2></div></Layout>} path="/customers" />
-        <Route element={<Layout><div className="p-12"><h2 className="text-3xl font-serif">Orders</h2></div></Layout>} path="/orders" />
+        <Route element={<Layout><Customers /></Layout>} path="/customers" />
+        <Route element={<Layout><Orders /></Layout>} path="/orders" />
       </Routes>
     </BrowserRouter>
   );
