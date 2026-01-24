@@ -65,7 +65,7 @@ def get_customer(customer_id: int, db: Session = Depends(get_db)):
 # ==========================================
 # UPDATE CUSTOMER
 # ==========================================
-@router.put("/{customer_id}", response_model=CustomerResponse)
+@router.patch("/{customer_id}", response_model=CustomerResponse)
 def update_customer(customer_id: int, customer_update: CustomerUpdate, db: Session = Depends(get_db)):
     """Update an existing customer"""
     db_customer = db.query(Customer).filter(Customer.id == customer_id).first()

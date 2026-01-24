@@ -1,19 +1,55 @@
+import { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { customerService } from '../services/customerService';
-import type { CustomerWithOrders } from '../types/customer';
+import type { CustomerWithOrders, CustomerUpdate } from '../types/customer';
 import DetailLayout from '../components/ui/DetailLayout';
 import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import GenericForm from '../components/ui/GenericForm';
+import type { FormField } from '../components/ui/GenericForm';
 
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
   const customerId = Number(id);
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const { data: customer, isLoading, error, isError } = useQuery({
     queryKey: ['customer', customerId],
     queryFn: () => customerService.getCustomerById(customerId),
+  });
+
+  // Mutation para actualizar cliente
+  const updateMutation = useMutation({
+    mutationFn: (data: CustomerUpdate) => customerService.updateCustomer(customerId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer', customerId] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      setIsEditModalOpen(false);
+      setEditError(null);
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to update customer';
+      setEditError(errorMessage);
+    },
+  });
+
+  // Mutation para eliminar cliente
+  const deleteMutation = useMutation({
+    mutationFn: () => customerService.deleteCustomer(customerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      navigate('/customers');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to delete customer';
+      alert(`Cannot delete customer: ${errorMessage}`);
+    },
   });
 
   const formatDate = (dateString: string) => {
@@ -24,19 +60,49 @@ const CustomerDetail = () => {
     return `${day}/${month}/${year}`;
   };
 
+  const editFormFields: FormField[] = [
+    { name: 'name', label: 'First Name', type: 'text', placeholder: 'Enter first name' },
+    { name: 'last_name', label: 'Last Name', type: 'text', placeholder: 'Enter last name' },
+    { name: 'email', label: 'Email Address', type: 'email', placeholder: 'Enter email' },
+  ];
+
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+      deleteMutation.mutate();
+    }
+  };
+
+  const handleEditSubmit = async (data: CustomerUpdate) => {
+    updateMutation.mutate(data);
+  };
+
   return (
-    <DetailLayout
-      title={customer ? `${customer.name} ${customer.last_name}` : 'Customer Details'}
-      backRoute="/customers"
+    <>
+      <DetailLayout
+        title={customer ? `${customer.name} ${customer.last_name}` : 'Customer Details'}
+        backRoute="/customers"
       isLoading={isLoading}
       error={isError ? error : null}
       actions={
-        <div className="flex gap-3">
-          <Button variant="secondary">Edit</Button>
-          <Button variant="secondary" className="text-red-600 hover:bg-red-50">
-            Delete
-          </Button>
-        </div>
+        customer && (
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setIsEditModalOpen(true)}
+              disabled={updateMutation.isPending || deleteMutation.isPending}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="secondary"
+              className="text-red-600 hover:bg-red-50"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        )
       }
     >
       {customer && (
@@ -158,6 +224,31 @@ const CustomerDetail = () => {
         </div>
       )}
     </DetailLayout>
+
+      {/* Edit Modal */}
+      {customer && (
+        <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Customer">
+          {editError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-none text-red-700">
+              {editError}
+            </div>
+          )}
+          <GenericForm<CustomerUpdate>
+            fields={editFormFields}
+            initialValues={{
+              name: customer.name,
+              last_name: customer.last_name,
+              email: customer.email,
+            }}
+            onSubmit={handleEditSubmit}
+            onCancel={() => {
+              setIsEditModalOpen(false);
+              setEditError(null);
+            }}
+          />
+        </Modal>
+      )}
+    </>
   );
 };
 

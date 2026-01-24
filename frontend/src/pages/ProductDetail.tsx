@@ -1,16 +1,54 @@
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productService } from '../services/productService';
+import type { ProductUpdate } from '../types/product';
 import DetailLayout from '../components/ui/DetailLayout';
 import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import GenericForm from '../components/ui/GenericForm';
+import type { FormField } from '../components/ui/GenericForm';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const productId = Number(id);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const { data: product, isLoading, error, isError } = useQuery({
     queryKey: ['product', productId],
     queryFn: () => productService.getProductById(productId),
+  });
+
+  // Mutation para actualizar producto
+  const updateMutation = useMutation({
+    mutationFn: (data: ProductUpdate) => productService.updateProduct(productId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      setIsEditModalOpen(false);
+      setEditError(null);
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to update product';
+      setEditError(errorMessage);
+    },
+  });
+
+  // Mutation para eliminar producto
+  const deleteMutation = useMutation({
+    mutationFn: () => productService.deleteProduct(productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      navigate('/products');
+    },
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.detail || error.message || 'Failed to delete product';
+      alert(`Cannot delete product: ${errorMessage}`);
+    },
   });
 
   const formatPrice = (price: string | number) => {
@@ -26,19 +64,58 @@ const ProductDetail = () => {
     return `${day}/${month}/${year}`;
   };
 
+  const editFormFields: FormField[] = [
+    { name: 'name', label: 'Product Name', type: 'text', placeholder: 'Enter product name' },
+    { name: 'price', label: 'Price', type: 'number', placeholder: 'Enter price' },
+    { name: 'description', label: 'Description', type: 'textarea', placeholder: 'Enter description' },
+    {
+      name: 'is_active',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'true', label: 'Active' },
+        { value: 'false', label: 'Inactive' },
+      ],
+    },
+  ];
+
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      deleteMutation.mutate();
+    }
+  };
+
+  const handleEditSubmit = async (data: ProductUpdate) => {
+    updateMutation.mutate(data);
+  };
+
   return (
-    <DetailLayout
-      title={product?.name || 'Product Details'}
-      backRoute="/products"
+    <>
+      <DetailLayout
+        title={product?.name || 'Product Details'}
+        backRoute="/products"
       isLoading={isLoading}
       error={isError ? error : null}
       actions={
-        <div className="flex gap-3">
-          <Button variant="secondary">Edit</Button>
-          <Button variant="secondary" className="text-red-600 hover:bg-red-50">
-            Delete
-          </Button>
-        </div>
+        product && (
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setIsEditModalOpen(true)}
+              disabled={updateMutation.isPending || deleteMutation.isPending}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="secondary"
+              className="text-red-600 hover:bg-red-50"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        )
       }
     >
       {product && (
@@ -135,6 +212,32 @@ const ProductDetail = () => {
         </div>
       )}
     </DetailLayout>
+
+      {/* Edit Modal */}
+      {product && (
+        <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Product">
+          {editError && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-none text-red-700">
+              {editError}
+            </div>
+          )}
+          <GenericForm<ProductUpdate>
+            fields={editFormFields}
+            initialValues={{
+              name: product.name,
+              price: product.price,
+              description: product.description,
+              is_active: product.is_active,
+            }}
+            onSubmit={handleEditSubmit}
+            onCancel={() => {
+              setIsEditModalOpen(false);
+              setEditError(null);
+            }}
+          />
+        </Modal>
+      )}
+    </>
   );
 };
 

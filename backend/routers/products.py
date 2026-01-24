@@ -65,7 +65,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 # ==========================================
 # UPDATE PRODUCT
 # ==========================================
-@router.put("/{product_id}", response_model=ProductResponse)
+@router.patch("/{product_id}", response_model=ProductResponse)
 def update_product(product_id: int, product_update: ProductUpdate, db: Session = Depends(get_db)):
     """Update an existing product"""
     db_product = db.query(Product).filter(Product.id == product_id).first()
