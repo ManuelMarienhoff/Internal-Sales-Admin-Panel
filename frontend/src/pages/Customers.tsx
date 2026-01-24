@@ -81,10 +81,14 @@ const Customers = () => {
     },
   ];
 
-  const handleFormSubmit = (data: CustomerFormData) => {
-    console.log('Form Data:', data);
-    setIsModalOpen(false);
-    // TODO: Connect to customerService.createCustomer() when backend is ready
+  const handleFormSubmit = async (data: CustomerFormData) => {
+    try {
+      const newCustomer = await customerService.createCustomer(data);
+      setCustomers([...customers, newCustomer]);
+      setIsModalOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create customer');
+    }
   };
 
   if (loading) {

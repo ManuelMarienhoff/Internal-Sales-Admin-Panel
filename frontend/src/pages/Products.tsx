@@ -101,10 +101,14 @@ const Products = () => {
     },
   ];
 
-  const handleFormSubmit = (data: ProductFormData) => {
-    console.log('Form Data:', data);
-    setIsModalOpen(false);
-    // TODO: Connect to productService.createProduct() when backend is ready
+  const handleFormSubmit = async (data: ProductFormData) => {
+    try {
+      const newProduct = await productService.createProduct(data);
+      setProducts([...products, newProduct]);
+      setIsModalOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create product');
+    }
   };
 
   if (loading) {
