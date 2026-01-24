@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { productService } from '../services/productService';
 import type { Product } from '../types/product';
 import Table from '../components/ui/Table';
@@ -11,26 +12,15 @@ import type { FormField } from '../components/ui/GenericForm';
 type ProductFormData = Omit<Product, 'id' | 'created_at'>;
 
 const Products = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const data = await productService.getProducts(0, 50);
-        setProducts(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
+  // ============== QUERY ==============
+  const { data: products = [], isLoading, error, isError } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => productService.getProducts(0, 50),
+  });
 
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
@@ -103,15 +93,17 @@ const Products = () => {
 
   const handleFormSubmit = async (data: ProductFormData) => {
     try {
-      const newProduct = await productService.createProduct(data);
-      setProducts([...products, newProduct]);
+      setFormError(null);
+      await productService.createProduct(data);
+      // Invalidate query to refetch fresh data
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       setIsModalOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create product');
+      setFormError(err instanceof Error ? err.message : 'Failed to create product');
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="px-12 py-12">
         <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Products</h1>
@@ -120,11 +112,11 @@ const Products = () => {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="px-12 py-12">
         <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Products</h1>
-        <div className="text-center text-red-600">Error: {error}</div>
+        <div className="text-center text-red-600">Error: {error instanceof Error ? error.message : 'Failed to load products'}</div>
       </div>
     );
   }
@@ -148,6 +140,11 @@ const Products = () => {
         onClose={() => setIsModalOpen(false)}
         title="Add New Product"
       >
+        {formError && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-none text-red-700">
+            {formError}
+          </div>
+        )}
         <GenericForm<ProductFormData>
           fields={formFields}
           onSubmit={handleFormSubmit}

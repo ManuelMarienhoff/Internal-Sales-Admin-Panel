@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { customerService } from '../services/customerService';
 import type { Customer } from '../types/customer';
 import Table from '../components/ui/Table';
@@ -11,26 +12,15 @@ import type { FormField } from '../components/ui/GenericForm';
 type CustomerFormData = Omit<Customer, 'id' | 'created_at'>;
 
 const Customers = () => {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        setLoading(true);
-        const data = await customerService.getCustomers(0, 50);
-        setCustomers(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCustomers();
-  }, []);
+  // ============== QUERY ==============
+  const { data: customers = [], isLoading, error, isError } = useQuery({
+    queryKey: ['customers'],
+    queryFn: () => customerService.getCustomers(0, 50),
+  });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -83,15 +73,17 @@ const Customers = () => {
 
   const handleFormSubmit = async (data: CustomerFormData) => {
     try {
-      const newCustomer = await customerService.createCustomer(data);
-      setCustomers([...customers, newCustomer]);
+      setFormError(null);
+      await customerService.createCustomer(data);
+      // Invalidate query to refetch fresh data
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
       setIsModalOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create customer');
+      setFormError(err instanceof Error ? err.message : 'Failed to create customer');
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="px-12 py-12">
         <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Customers</h1>
@@ -100,11 +92,11 @@ const Customers = () => {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="px-12 py-12">
         <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Customers</h1>
-        <div className="text-center text-red-600">Error: {error}</div>
+        <div className="text-center text-red-600">Error: {error instanceof Error ? error.message : 'Failed to load customers'}</div>
       </div>
     );
   }
@@ -128,6 +120,11 @@ const Customers = () => {
         onClose={() => setIsModalOpen(false)}
         title="Add New Customer"
       >
+        {formError && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-none text-red-700">
+            {formError}
+          </div>
+        )}
         <GenericForm<CustomerFormData>
           fields={formFields}
           onSubmit={handleFormSubmit}

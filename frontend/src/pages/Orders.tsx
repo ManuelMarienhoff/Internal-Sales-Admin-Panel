@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { orderService } from '../services/orderService';
 import type { Order } from '../types/order';
 import Table from '../components/ui/Table';
@@ -7,32 +8,20 @@ import Button from '../components/ui/Button';
 import CreateOrderModal from '../components/orders/CreateOrderModal';
 
 const Orders = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // ============== FETCH ORDERS ==============
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const data = await orderService.getOrders(0, 50);
-      setOrders(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  // ============== QUERY ==============
+  const { data: orders = [], isLoading, error, isError } = useQuery({
+    queryKey: ['orders'],
+    queryFn: () => orderService.getOrders(0, 50),
+  });
 
   // ============== HANDLERS ==============
   const handleOrderCreated = () => {
     setIsModalOpen(false);
-    fetchOrders();
+    // Invalidate orders query to refetch fresh data
+    queryClient.invalidateQueries({ queryKey: ['orders'] });
   };
 
   // ============== FORMATTERS ==============
@@ -93,7 +82,7 @@ const Orders = () => {
     },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="px-12 py-12">
         <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Orders</h1>
@@ -102,11 +91,11 @@ const Orders = () => {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="px-12 py-12">
         <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Orders</h1>
-        <div className="text-center text-red-600">Error: {error}</div>
+        <div className="text-center text-red-600">Error: {error instanceof Error ? error.message : 'Failed to load orders'}</div>
       </div>
     );
   }
