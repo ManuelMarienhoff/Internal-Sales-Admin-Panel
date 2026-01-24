@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { orderService } from '../services/orderService';
 import type { OrderWithDetails } from '../types/order';
@@ -24,6 +24,8 @@ interface OrderItem {
 const OrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const orderId = Number(id);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { data: order, isLoading, error, isError } = useQuery({
     queryKey: ['order', orderId],
@@ -60,7 +62,12 @@ const OrderDetail = () => {
     {
       header: 'Product',
       render: (item) => (
-        <span className="font-medium text-pwc-black">{item.product.name}</span>
+        <button
+          onClick={() => navigate(`/products/${item.product.id}`, { state: { from: location } })}
+          className="font-medium text-pwc-black hover:text-pwc-orange transition cursor-pointer"
+        >
+          {item.product.name}
+        </button>
       ),
     },
     {
@@ -142,8 +149,13 @@ const OrderDetail = () => {
               <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                 Customer
               </dt>
-              <dd className="text-base text-pwc-black font-medium">
-                {order.customer?.name} {order.customer?.last_name}
+              <dd className="text-base font-medium">
+                <button
+                  onClick={() => navigate(`/customers/${order.customer?.id}`, { state: { from: location } })}
+                  className="text-pwc-black hover:text-pwc-orange transition cursor-pointer underline"
+                >
+                  {order.customer?.name} {order.customer?.last_name}
+                </button>
               </dd>
             </div>
 

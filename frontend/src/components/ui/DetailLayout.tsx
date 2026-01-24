@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface DetailLayoutProps {
   title: string;
@@ -18,13 +18,25 @@ const DetailLayout = ({
   children,
 }: DetailLayoutProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleBack = () => {
+    // Si existe historial previo en la sesión, volver a la página anterior
+    // location.key === 'default' significa que es la primera página de la sesión
+    if (location.key !== 'default') {
+      navigate(-1);
+    } else {
+      // Fallback: si es la primera página, usar la ruta por defecto
+      navigate(backRoute);
+    }
+  };
 
   if (isLoading) {
     return (
       <div className="px-12 py-12">
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => navigate(backRoute)}
+            onClick={handleBack}
             className="p-2 hover:bg-gray-100 rounded-none transition"
             title="Go back"
           >
@@ -50,7 +62,7 @@ const DetailLayout = ({
       <div className="px-12 py-12">
         <div className="flex items-center gap-4 mb-8">
           <button
-            onClick={() => navigate(backRoute)}
+            onClick={handleBack}
             className="p-2 hover:bg-gray-100 rounded-none transition"
             title="Go back"
           >
@@ -75,7 +87,7 @@ const DetailLayout = ({
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate(backRoute)}
+            onClick={handleBack}
             className="p-2 hover:bg-gray-100 rounded-none transition text-2xl"
             title="Go back"
           >

@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { customerService } from '../services/customerService';
 import type { CustomerWithOrders } from '../types/customer';
@@ -8,6 +8,8 @@ import Button from '../components/ui/Button';
 const CustomerDetail = () => {
   const { id } = useParams<{ id: string }>();
   const customerId = Number(id);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { data: customer, isLoading, error, isError } = useQuery({
     queryKey: ['customer', customerId],
@@ -132,9 +134,10 @@ const CustomerDetail = () => {
 
               <div className="grid grid-cols-1 gap-4">
                 {(customer as CustomerWithOrders).orders.map((order) => (
-                  <div
+                  <button
                     key={order.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-none hover:bg-gray-100 transition cursor-pointer"
+                    onClick={() => navigate(`/orders/${order.id}`, { state: { from: location } })}
+                    className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-none hover:bg-orange-50 transition cursor-pointer text-left"
                   >
                     <div>
                       <p className="font-semibold text-pwc-black">Order #{order.id}</p>
@@ -147,7 +150,7 @@ const CustomerDetail = () => {
                         ? parseFloat(order.total_amount).toFixed(2)
                         : order.total_amount.toFixed(2)}
                     </p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
