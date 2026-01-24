@@ -1,7 +1,8 @@
 import axiosInstance from '../api/axios';
-import type { Product } from '../types/product';
+import type { Product, ProductCreate, ProductUpdate } from '../types/product';
 
 export const productService = {
+  // ============== READ OPERATIONS ==============
   getProducts: async (skip: number = 0, limit: number = 10): Promise<Product[]> => {
     try {
       const response = await axiosInstance.get<Product[]>('/products', {
@@ -22,6 +23,35 @@ export const productService = {
       return response.data;
     } catch (error) {
       throw new Error(`Failed to fetch product: ${error}`);
+    }
+  },
+
+  // ============== CREATE OPERATION ==============
+  createProduct: async (productData: ProductCreate): Promise<Product> => {
+    try {
+      const response = await axiosInstance.post<Product>('/products', productData);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to create product: ${error}`);
+    }
+  },
+
+  // ============== UPDATE OPERATION ==============
+  updateProduct: async (id: number, productData: ProductUpdate): Promise<Product> => {
+    try {
+      const response = await axiosInstance.patch<Product>(`/products/${id}`, productData);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to update product: ${error}`);
+    }
+  },
+
+  // ============== DELETE OPERATION ==============
+  deleteProduct: async (id: number): Promise<void> => {
+    try {
+      await axiosInstance.delete(`/products/${id}`);
+    } catch (error) {
+      throw new Error(`Failed to delete product: ${error}`);
     }
   },
 };

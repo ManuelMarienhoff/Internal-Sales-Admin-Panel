@@ -1,7 +1,8 @@
 import axiosInstance from '../api/axios';
-import type { Order } from '../types/order';
+import type { Order, OrderCreate, OrderUpdate, OrderWithDetails } from '../types/order';
 
 export const orderService = {
+  // ============== READ OPERATIONS ==============
   getOrders: async (skip: number = 0, limit: number = 10): Promise<Order[]> => {
     try {
       const response = await axiosInstance.get<Order[]>('/orders', {
@@ -16,12 +17,32 @@ export const orderService = {
     }
   },
 
-  getOrderById: async (id: number): Promise<Order> => {
+  getOrderById: async (id: number): Promise<OrderWithDetails> => {
     try {
-      const response = await axiosInstance.get<Order>(`/orders/${id}`);
+      const response = await axiosInstance.get<OrderWithDetails>(`/orders/${id}`);
       return response.data;
     } catch (error) {
       throw new Error(`Failed to fetch order: ${error}`);
+    }
+  },
+
+  // ============== CREATE OPERATION ==============
+  createOrder: async (orderData: OrderCreate): Promise<Order> => {
+    try {
+      const response = await axiosInstance.post<Order>('/orders', orderData);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to create order: ${error}`);
+    }
+  },
+
+  // ============== UPDATE OPERATION ==============
+  updateOrderStatus: async (id: number, orderData: OrderUpdate): Promise<Order> => {
+    try {
+      const response = await axiosInstance.patch<Order>(`/orders/${id}`, orderData);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to update order: ${error}`);
     }
   },
 };
