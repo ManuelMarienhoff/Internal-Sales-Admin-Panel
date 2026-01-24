@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { productService } from '../services/productService';
 import type { Product } from '../types/product';
@@ -12,6 +13,7 @@ import type { FormField } from '../components/ui/GenericForm';
 type ProductFormData = Omit<Product, 'id' | 'created_at'>;
 
 const Products = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -132,7 +134,12 @@ const Products = () => {
       </div>
 
       {/* Table */}
-      <Table data={products} columns={columns} emptyMessage="No products found" />
+      <Table 
+        data={products} 
+        columns={columns} 
+        emptyMessage="No products found"
+        onRowClick={(product) => navigate(`/products/${product.id}`)}
+      />
 
       {/* Modal */}
       <Modal

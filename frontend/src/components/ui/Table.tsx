@@ -11,12 +11,14 @@ interface TableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
   emptyMessage?: string;
+  onRowClick?: (row: T) => void;
 }
 
 const Table = <T extends { id?: number }>({
   data,
   columns,
   emptyMessage = 'No data found',
+  onRowClick,
 }: TableProps<T>) => {
   if (data.length === 0) {
     return (
@@ -52,7 +54,10 @@ const Table = <T extends { id?: number }>({
               key={row.id || rowIndex}
               className={`${
                 rowIndex % 2 === 0 ? 'bg-white' : 'bg-orange-50'
-              } border-b border-gray-300 hover:bg-orange-100 transition-colors`}
+              } border-b border-gray-300 hover:bg-orange-100 transition-colors ${
+                onRowClick ? 'cursor-pointer' : ''
+              }`}
+              onClick={() => onRowClick?.(row)}
             >
               {columns.map((column, colIndex) => (
                 <td key={colIndex} className="px-6 py-4 text-pwc-black">

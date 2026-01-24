@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { orderService } from '../services/orderService';
 import type { Order } from '../types/order';
@@ -8,6 +9,7 @@ import Button from '../components/ui/Button';
 import CreateOrderModal from '../components/orders/CreateOrderModal';
 
 const Orders = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -111,7 +113,12 @@ const Orders = () => {
       </div>
 
       {/* Table */}
-      <Table data={orders} columns={columns} emptyMessage="No orders found" />
+      <Table 
+        data={orders} 
+        columns={columns} 
+        emptyMessage="No orders found"
+        onRowClick={(order) => navigate(`/orders/${order.id}`)}
+      />
 
       {/* Create Order Modal */}
       <CreateOrderModal

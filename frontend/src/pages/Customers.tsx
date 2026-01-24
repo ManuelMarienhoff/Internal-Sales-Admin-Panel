@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { customerService } from '../services/customerService';
 import type { Customer } from '../types/customer';
@@ -12,6 +13,7 @@ import type { FormField } from '../components/ui/GenericForm';
 type CustomerFormData = Omit<Customer, 'id' | 'created_at'>;
 
 const Customers = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -112,7 +114,12 @@ const Customers = () => {
       </div>
 
       {/* Table */}
-      <Table data={customers} columns={columns} emptyMessage="No customers found" />
+      <Table 
+        data={customers} 
+        columns={columns} 
+        emptyMessage="No customers found"
+        onRowClick={(customer) => navigate(`/customers/${customer.id}`)}
+      />
 
       {/* Modal */}
       <Modal
