@@ -3,28 +3,39 @@ import { orderService } from '../services/orderService';
 import type { Order } from '../types/order';
 import Table from '../components/ui/Table';
 import type { ColumnDef } from '../components/ui/Table';
+import Button from '../components/ui/Button';
+import CreateOrderModal from '../components/orders/CreateOrderModal';
 
 const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // ============== FETCH ORDERS ==============
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await orderService.getOrders(0, 50);
+      setOrders(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const data = await orderService.getOrders(0, 50);
-        setOrders(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
   }, []);
 
+  // ============== HANDLERS ==============
+  const handleOrderCreated = () => {
+    setIsModalOpen(false);
+    fetchOrders();
+  };
+
+  // ============== FORMATTERS ==============
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
     return `$${numPrice.toFixed(2)}`;
@@ -41,13 +52,13 @@ const Orders = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft':
-        return 'text-red-700 font-medium';
+        return 'text-red-700 bg-red-50';
       case 'confirmed':
-        return 'text-yellow-700 font-medium';
+        return 'text-yellow-700 bg-yellow-50';
       case 'completed':
-        return 'text-green-800 font-medium';
+        return 'text-green-800 bg-green-50';
       default:
-        return 'text-gray-600 font-medium';
+        return 'text-gray-600 bg-gray-50';
     }
   };
 
@@ -61,17 +72,17 @@ const Orders = () => {
       accessor: 'customer_id',
     },
     {
-      header: 'Total Amount',
+      header: 'Status',
       render: (order) => (
-        <span className="font-semibold">{formatPrice(order.total_amount)}</span>
+        <span className={`px-3 py-1 rounded-none font-medium text-sm ${getStatusColor(order.status)}`}>
+          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+        </span>
       ),
     },
     {
-      header: 'Status',
+      header: 'Total Amount',
       render: (order) => (
-        <span className={getStatusColor(order.status)}>
-          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-        </span>
+        <span className="font-semibold">{formatPrice(order.total_amount)}</span>
       ),
     },
     {
@@ -102,11 +113,23 @@ const Orders = () => {
 
   return (
     <div className="px-12 py-12">
-      {/* Title */}
-      <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Orders</h1>
+      {/* Header with Title and Button */}
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-serif font-bold text-pwc-black">Orders</h1>
+        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+          + New Order
+        </Button>
+      </div>
 
       {/* Table */}
       <Table data={orders} columns={columns} emptyMessage="No orders found" />
+
+      {/* Create Order Modal */}
+      <CreateOrderModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onOrderCreated={handleOrderCreated}
+      />
     </div>
   );
 };
