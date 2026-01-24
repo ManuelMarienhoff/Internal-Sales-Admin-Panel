@@ -11,6 +11,9 @@ router = APIRouter(
 )
 
 
+# ==========================================
+# CREATE PRODUCT (Uniqueness Check)
+# ==========================================
 @router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 def create_product(product: ProductCreate, db: Session = Depends(get_db)):
     """Create a new product"""
@@ -34,6 +37,9 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
     return db_product
 
 
+# ==========================================
+# LIST PRODUCTS 
+# ==========================================
 @router.get("/", response_model=list[ProductResponse])
 def get_products(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     """Get list of products with pagination"""
@@ -41,6 +47,9 @@ def get_products(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return products
 
 
+# ==========================================
+# GEdT PRODUCT DETAIL
+# ==========================================
 @router.get("/{product_id}", response_model=ProductResponse)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     """Get a specific product by ID"""
@@ -53,6 +62,9 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     return product
 
 
+# ==========================================
+# UPDATE PRODUCT
+# ==========================================
 @router.put("/{product_id}", response_model=ProductResponse)
 def update_product(product_id: int, product_update: ProductUpdate, db: Session = Depends(get_db)):
     """Update an existing product"""
@@ -74,6 +86,9 @@ def update_product(product_id: int, product_update: ProductUpdate, db: Session =
     return db_product
 
 
+# ==========================================
+# DELETE PRODUCT (Soft Delete)
+# ==========================================
 @router.delete("/{product_id}", response_model=dict, status_code=status.HTTP_200_OK)
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     """

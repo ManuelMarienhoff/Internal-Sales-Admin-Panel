@@ -13,6 +13,9 @@ router = APIRouter(
 )
 
 
+# ==========================================
+# CREATE ORDER (Transaction & Business Logic)
+# ==========================================
 @router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     """
@@ -22,7 +25,7 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     - Calculates total amount automatically
     - Rolls back transaction if any product is invalid or inactive
     """
-    # Verify customer exists
+    # 1. Verify customer exists
     customer = db.query(Customer).filter(Customer.id == order.customer_id).first()
     if not customer:
         raise HTTPException(
@@ -30,7 +33,7 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
             detail=f"Customer with ID {order.customer_id} not found"
         )
     
-    # Validate and fetch products with their current prices
+    # 2. Validate and fetch products with their current prices
     order_items_data = []
     total_amount = Decimal("0.00")
     
@@ -45,14 +48,14 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
                     detail=f"Product with ID {item.product_id} not found"
                 )
             
-            # Check if product is active
+            # Check if product is active (CRITICAL RULE)
             if not product.is_active:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Product '{product.name}' is inactive and cannot be ordered"
                 )
             
-            # Calculate item subtotal with frozen price
+            # Calculate item subtotal with frozen price (FROM DB, NOT FRONTEND)
             item_subtotal = product.price * item.quantity
             total_amount += item_subtotal
             
@@ -63,16 +66,16 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
                 "unit_price": product.price
             })
         
-        # Create the order
+        # 3. Create the order header
         db_order = Order(
             customer_id=order.customer_id,
             status=OrderStatus.DRAFT,
             total_amount=total_amount
         )
         db.add(db_order)
-        db.flush()  # Flush to get the order ID
+        db.flush()  # Flush to get the order ID without committing yet
         
-        # Create order items with frozen prices
+        # 4. Create order items with frozen prices
         for item_data in order_items_data:
             db_order_item = OrderItem(
                 order_id=db_order.id,
@@ -82,14 +85,17 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
             )
             db.add(db_order_item)
         
+        # 5. Commit everything if success
         db.commit()
         db.refresh(db_order)
         return db_order
     
     except HTTPException:
+        # If logical error (e.g. inactive product), rollback and propagate error
         db.rollback()
         raise
     except Exception as e:
+        # If database error, rollback and return 500
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -97,6 +103,9 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
         )
 
 
+# ==========================================
+# LIST ORDERS
+# ==========================================
 @router.get("/", response_model=list[OrderResponse])
 def get_orders(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     """Get list of orders with pagination"""
@@ -104,6 +113,9 @@ def get_orders(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return orders
 
 
+# ==========================================
+# GET ORDER DETAIL (With Items & Customer)
+# ==========================================
 @router.get("/{order_id}", response_model=OrderWithDetails)
 def get_order(order_id: int, db: Session = Depends(get_db)):
     """
@@ -119,11 +131,14 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     return order
 
 
+# ==========================================
+# UPDATE STATUS 
+# ==========================================
 @router.patch("/{order_id}", response_model=OrderResponse)
 def update_order_status(order_id: int, order_update: OrderUpdate, db: Session = Depends(get_db)):
     """
     Update order status with business logic validation.
-    - Cannot revert to 'draft' if order is already 'completed'
+    - Only draft orders can be edited/confirmed
     """
     db_order = db.query(Order).filter(Order.id == order_id).first()
     if not db_order:
@@ -132,17 +147,16 @@ def update_order_status(order_id: int, order_update: OrderUpdate, db: Session = 
             detail=f"Order with ID {order_id} not found"
         )
     
-    # Validate status if provided
+    # Business rule: Only draft orders can be edited
+    if db_order.status != OrderStatus.DRAFT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot edit order with status '{db_order.status.value}'. Only draft orders can be modified."
+        )
+    
+    # Validate and update status if provided
     if order_update.status:
         new_status = OrderStatus(order_update.status)
-        
-        # Business rule: Cannot go back to draft if already completed
-        if new_status == OrderStatus.DRAFT and db_order.status == OrderStatus.COMPLETED:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot revert order to 'draft' status after it has been 'completed'"
-            )
-        
         db_order.status = new_status
     
     db.add(db_order)

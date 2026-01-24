@@ -12,6 +12,9 @@ router = APIRouter(
 )
 
 
+# ==========================================
+# CREATE CUSTOMER (Uniqueness Validation)
+# ==========================================
 @router.post("/", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
 def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
     """Create a new customer"""
@@ -34,6 +37,9 @@ def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
     return db_customer
 
 
+# ==========================================
+# LIST CUSTOMERS 
+# ==========================================
 @router.get("/", response_model=list[CustomerResponse])
 def get_customers(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     """Get list of customers with pagination"""
@@ -41,6 +47,9 @@ def get_customers(skip: int = 0, limit: int = 10, db: Session = Depends(get_db))
     return customers
 
 
+# ==========================================
+# GET CUSTOMER DETAIL (With Orders)
+# ==========================================
 @router.get("/{customer_id}", response_model=CustomerWithOrders)
 def get_customer(customer_id: int, db: Session = Depends(get_db)):
     """Get a specific customer by ID with their orders"""
@@ -53,6 +62,9 @@ def get_customer(customer_id: int, db: Session = Depends(get_db)):
     return customer
 
 
+# ==========================================
+# UPDATE CUSTOMER
+# ==========================================
 @router.put("/{customer_id}", response_model=CustomerResponse)
 def update_customer(customer_id: int, customer_update: CustomerUpdate, db: Session = Depends(get_db)):
     """Update an existing customer"""
@@ -83,6 +95,9 @@ def update_customer(customer_id: int, customer_update: CustomerUpdate, db: Sessi
     return db_customer
 
 
+# ==========================================
+# DELETE CUSTOMER (Integrity Check)
+# ==========================================
 @router.delete("/{customer_id}", response_model=dict, status_code=status.HTTP_200_OK)
 def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     """
