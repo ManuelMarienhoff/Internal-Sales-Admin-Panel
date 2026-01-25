@@ -22,6 +22,7 @@ const Products = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
+  const [view, setView] = useState<'active' | 'inactive'>('active');
   const pageSize = 8;
 
   const handleSearch = useCallback((term: string) => {
@@ -31,10 +32,11 @@ const Products = () => {
 
   // ============== QUERY ==============
   const { data, error, isError, isFetching } = useQuery<PaginatedResponse<Product>>({
-    queryKey: ['products', searchTerm, page, pageSize],
+    queryKey: ['products', searchTerm, page, pageSize, view],
     queryFn: () => {
       const skip = (page - 1) * pageSize;
-      return productService.getProducts(skip, pageSize, searchTerm);
+      const isActive = searchTerm ? undefined : view === 'active' ? true : false;
+      return productService.getProducts(skip, pageSize, searchTerm, isActive);
     },
     placeholderData: keepPreviousData,
   });
@@ -45,6 +47,11 @@ const Products = () => {
   };
 
   const columns: ColumnDef<Product>[] = [
+    {
+      header: 'ID',
+      accessor: 'id',
+      className: 'w-16',
+    },
     {
       header: 'Name',
       accessor: 'name',
@@ -68,13 +75,11 @@ const Products = () => {
       header: 'Status',
       className: 'w-1/6',
       render: (product) => (
-        <>
-          {product.is_active ? (
-            <span className="text-green-800 font-medium">Active</span>
-          ) : (
-            <span className="text-gray-600 font-medium">Inactive</span>
-          )}
-        </>
+        product.is_active ? (
+          <span className="text-green-800 font-medium">Active</span>
+        ) : (
+          <span className="text-gray-600 font-medium">Inactive</span>
+        )
       ),
     },
   ];
@@ -134,13 +139,43 @@ const Products = () => {
         </Button>
       </div>
 
-      {/* Search Bar */}
+      {/* Search Bar (global) */}
       <div className="mb-6">
         <SearchBar
           placeholder="Search products by ID or name..."
           onSearch={handleSearch}
           initialValue={searchTerm}
         />
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-4 mb-4 border-b border-gray-200">
+        <button
+          type="button"
+          disabled={Boolean(searchTerm)}
+          className={`pb-2 text-sm font-medium ${
+            view === 'active' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500'
+          } ${searchTerm ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={() => {
+            setView('active');
+            setPage(1);
+          }}
+        >
+          Active Products
+        </button>
+        <button
+          type="button"
+          disabled={Boolean(searchTerm)}
+          className={`pb-2 text-sm font-medium ${
+            view === 'inactive' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500'
+          } ${searchTerm ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={() => {
+            setView('inactive');
+            setPage(1);
+          }}
+        >
+          Inactive Products
+        </button>
       </div>
 
       {isError && (

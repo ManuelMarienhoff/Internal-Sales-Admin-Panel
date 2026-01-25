@@ -101,8 +101,8 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 # LIST PRODUCTS 
 # ==========================================
 @router.get("/", response_model=PaginatedResponse[ProductResponse])
-def get_products(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
-    """Get list of products with pagination, search, and total count"""
+def get_products(skip: int = 0, limit: int = 10, search: str = None, is_active: bool = None, db: Session = Depends(get_db)):
+    """Get list of products with pagination, search, optional active filter, and total count"""
     query = db.query(Product)
 
     if search:
@@ -110,6 +110,9 @@ def get_products(skip: int = 0, limit: int = 10, search: str = None, db: Session
             query = query.filter(Product.id == int(search))
         else:
             query = query.filter(Product.name.ilike(f"%{search}%"))
+
+    if is_active is not None:
+        query = query.filter(Product.is_active == is_active)
 
     total = query.count()
     items = query.offset(skip).limit(limit).all()
