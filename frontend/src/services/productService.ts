@@ -47,9 +47,10 @@ export const productService = {
   },
 
   // ============== DELETE OPERATION ==============
-  deleteProduct: async (id: number): Promise<void> => {
+  deleteProduct: async (id: number): Promise<{ action: 'deleted' | 'deactivated'; message: string; affected_draft_orders: number[] }> => {
     try {
-      await axiosInstance.delete(`/products/${id}`);
+      const response = await axiosInstance.delete(`/products/${id}`);
+      return response.data;
     } catch (error) {
       throw new Error(`Failed to delete product: ${error}`);
     }

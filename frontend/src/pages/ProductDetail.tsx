@@ -7,7 +7,13 @@ import DetailLayout from '../components/ui/DetailLayout';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import GenericForm from '../components/ui/GenericForm';
+import Alert from '../components/ui/Alert';
 import type { FormField } from '../components/ui/GenericForm';
+
+interface AlertData {
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+}
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +23,7 @@ const ProductDetail = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [alertData, setAlertData] = useState<AlertData | null>(null);
 
   const { data: product, isLoading, error, isError } = useQuery({
     queryKey: ['product', productId],
@@ -41,13 +48,28 @@ const ProductDetail = () => {
   // Mutation para eliminar producto
   const deleteMutation = useMutation({
     mutationFn: () => productService.deleteProduct(productId),
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      navigate('/products');
+      
+      if (response.action === 'deleted') {
+        // Product was permanently deleted, redirect to products list
+        navigate('/products');
+      } else if (response.action === 'deactivated') {
+        // Product was deactivated, show warning alert and invalidate query
+        setAlertData({
+          type: 'warning',
+          message: response.message,
+        });
+        // Invalidate the product query to refresh the status badge
+        queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      }
     },
     onError: (error: any) => {
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to delete product';
-      alert(`Cannot delete product: ${errorMessage}`);
+      setAlertData({
+        type: 'error',
+        message: `Cannot delete product: ${errorMessage}`,
+      });
     },
   });
 
@@ -80,7 +102,7 @@ const ProductDetail = () => {
   ];
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this product?')) {
       deleteMutation.mutate();
     }
   };
@@ -94,32 +116,44 @@ const ProductDetail = () => {
       <DetailLayout
         title={product?.name || 'Product Details'}
         backRoute="/products"
-      isLoading={isLoading}
-      error={isError ? error : null}
-      actions={
-        product && (
-          <div className="flex gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => setIsEditModalOpen(true)}
-              disabled={updateMutation.isPending || deleteMutation.isPending}
+        isLoading={isLoading}
+        error={isError ? error : null}
+        actions={
+          product && (
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setIsEditModalOpen(true)}
+                disabled={updateMutation.isPending || deleteMutation.isPending}
+              >
+                Edit
+              </Button>
+              <Button
+                variant="secondary"
+                className="text-red-600 hover:bg-red-50"
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          )
+        }
+      >
+        {/* Alert Component - Displayed at the top */}
+        {alertData && (
+          <div className="mb-8">
+            <Alert
+              type={alertData.type}
+              onClose={() => setAlertData(null)}
             >
-              Edit
-            </Button>
-            <Button
-              variant="secondary"
-              className="text-red-600 hover:bg-red-50"
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </Button>
+              {alertData.message}
+            </Alert>
           </div>
-        )
-      }
-    >
-      {product && (
-        <div>
+        )}
+
+        {product && (
+          <div>
           {/* Description List - 2 Columns */}
           <dl className="grid grid-cols-2 gap-8">
             {/* Product Name */}
