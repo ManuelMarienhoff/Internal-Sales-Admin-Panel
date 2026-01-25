@@ -39,6 +39,11 @@ export interface Order extends OrderCreate {
   status: 'draft' | 'confirmed' | 'completed';
   total_amount: number | string;
   created_at: string;
+  customer: {
+    name: string;
+    last_name: string;
+    email: string;
+  };
 }
 
 // ============== ORDER WITH DETAILS ==============

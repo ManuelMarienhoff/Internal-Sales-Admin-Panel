@@ -239,15 +239,6 @@ const ProductDetail = () => {
                   #{product.id}
                 </dd>
               </div>
-
-              <div>
-                <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
-                  Last Updated
-                </dt>
-                <dd className="text-base text-gray-600">
-                  {formatDate(product.created_at)}
-                </dd>
-              </div>
             </dl>
           </div>
         </div>

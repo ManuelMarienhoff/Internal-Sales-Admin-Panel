@@ -49,6 +49,16 @@ class CustomerResponse(BaseModel):
         from_attributes = True
 
 
+class CustomerBase(BaseModel):
+    """Minimal customer info for nested responses"""
+    name: str
+    last_name: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
+
 class CustomerWithOrders(CustomerResponse):
     """Customer schema with associated orders"""
     orders: List["OrderResponse"] = []
@@ -129,6 +139,7 @@ class OrderResponse(BaseModel):
     """Order response schema"""
     id: int
     customer_id: int
+    customer: CustomerBase  # Nested customer info
     status: str
     total_amount: Decimal
     created_at: datetime

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from decimal import Decimal
 from database import get_db
@@ -109,7 +109,7 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=PaginatedResponse[OrderResponse])
 def get_orders(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
     """Get list of orders with pagination, search, and total count"""
-    query = db.query(Order)
+    query = db.query(Order).options(joinedload(Order.customer))
 
     if search:
         if search.isdigit():

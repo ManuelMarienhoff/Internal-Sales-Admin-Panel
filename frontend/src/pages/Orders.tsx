@@ -17,7 +17,7 @@ const Orders = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 8;
+  const pageSize = 6;
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
@@ -74,8 +74,16 @@ const Orders = () => {
       accessor: 'id',
     },
     {
-      header: 'Customer ID',
-      accessor: 'customer_id',
+      header: 'Customer',
+      className: 'w-1/4',
+      render: (order) => (
+        <div>
+          <div className="font-medium text-gray-900">
+            {order.customer.name} {order.customer.last_name}
+          </div>
+          <div className="text-sm text-gray-500">{order.customer.email}</div>
+        </div>
+      ),
     },
     {
       header: 'Status',
