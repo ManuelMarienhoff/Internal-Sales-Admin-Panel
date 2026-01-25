@@ -45,17 +45,25 @@ def _remove_product_from_drafts(db: Session, product_id: int) -> list[int]:
         for item in order_items:
             db.delete(item)
         
+        # Force flush so the remaining_items query sees the deletions immediately
+        db.flush()
+        
         # Recalculate and update the order's total_amount
         remaining_items = db.query(OrderItem).filter(
             OrderItem.order_id == draft_order.id
         ).all()
         
-        new_total = sum(
-            Decimal(item.quantity) * Decimal(item.unit_price)
-            for item in remaining_items
-        )
-        draft_order.total_amount = new_total
-        db.add(draft_order)
+        if len(remaining_items) == 0:
+            # If the order is now empty, delete the order itself
+            db.delete(draft_order)
+        else:
+            # Otherwise, recalculate the total and persist the order
+            new_total = sum(
+                Decimal(item.quantity) * Decimal(item.unit_price)
+                for item in remaining_items
+            )
+            draft_order.total_amount = new_total
+            db.add(draft_order)
         affected_orders.append(draft_order.id)
     
     db.flush()  # Flush to ensure draft cleanup is registered

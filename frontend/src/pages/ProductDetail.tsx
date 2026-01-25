@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { productService } from '../services/productService';
 import type { ProductUpdate } from '../types/product';
 import DetailLayout from '../components/ui/DetailLayout';
@@ -13,6 +14,10 @@ import type { FormField } from '../components/ui/GenericForm';
 interface AlertData {
   type: 'success' | 'error' | 'warning' | 'info';
   message: string;
+}
+
+interface ApiError {
+  detail?: string;
 }
 
 const ProductDetail = () => {
@@ -36,10 +41,11 @@ const ProductDetail = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       setIsEditModalOpen(false);
       setEditError(null);
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiError>) => {
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to update product';
       setEditError(errorMessage);
     },
@@ -50,6 +56,7 @@ const ProductDetail = () => {
     mutationFn: () => productService.deleteProduct(productId),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
       
       if (response.action === 'deleted') {
         // Product was permanently deleted, redirect to products list
@@ -64,7 +71,7 @@ const ProductDetail = () => {
         queryClient.invalidateQueries({ queryKey: ['product', productId] });
       }
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<ApiError>) => {
       const errorMessage = error.response?.data?.detail || error.message || 'Failed to delete product';
       setAlertData({
         type: 'error',
