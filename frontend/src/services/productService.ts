@@ -3,12 +3,13 @@ import type { Product, ProductCreate, ProductUpdate } from '../types/product';
 
 export const productService = {
   // ============== READ OPERATIONS ==============
-  getProducts: async (skip: number = 0, limit: number = 10): Promise<Product[]> => {
+  getProducts: async (skip: number = 0, limit: number = 10, search?: string): Promise<Product[]> => {
     try {
       const response = await axiosInstance.get<Product[]>('/products', {
         params: {
           skip,
           limit,
+          ...(search && { search }),
         },
       });
       return response.data;

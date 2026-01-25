@@ -6,17 +6,19 @@ import type { Order } from '../types/order';
 import Table from '../components/ui/Table';
 import type { ColumnDef } from '../components/ui/Table';
 import Button from '../components/ui/Button';
+import SearchBar from '../components/ui/SearchBar';
 import CreateOrderModal from '../components/orders/CreateOrderModal';
 
 const Orders = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // ============== QUERY ==============
   const { data: orders = [], isLoading, error, isError } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => orderService.getOrders(0, 50),
+    queryKey: ['orders', searchTerm],
+    queryFn: () => orderService.getOrders(0, 50, searchTerm),
   });
 
   // ============== HANDLERS ==============
@@ -110,6 +112,15 @@ const Orders = () => {
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           + New Order
         </Button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <SearchBar
+          placeholder="Search orders by ID or customer name..."
+          onSearch={setSearchTerm}
+          initialValue={searchTerm}
+        />
       </div>
 
       {/* Table */}

@@ -8,6 +8,7 @@ import type { ColumnDef } from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import GenericForm from '../components/ui/GenericForm';
+import SearchBar from '../components/ui/SearchBar';
 import type { FormField } from '../components/ui/GenericForm';
 
 type ProductFormData = Omit<Product, 'id' | 'created_at'>;
@@ -17,11 +18,12 @@ const Products = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // ============== QUERY ==============
   const { data: products = [], isLoading, error, isError } = useQuery({
-    queryKey: ['products'],
-    queryFn: () => productService.getProducts(0, 50),
+    queryKey: ['products', searchTerm],
+    queryFn: () => productService.getProducts(0, 50, searchTerm),
   });
 
   const formatPrice = (price: string | number) => {
@@ -131,6 +133,15 @@ const Products = () => {
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           New Product
         </Button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <SearchBar
+          placeholder="Search products by ID or name..."
+          onSearch={setSearchTerm}
+          initialValue={searchTerm}
+        />
       </div>
 
       {/* Table */}

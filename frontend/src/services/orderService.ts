@@ -3,12 +3,13 @@ import type { Order, OrderCreate, OrderUpdate, OrderWithDetails } from '../types
 
 export const orderService = {
   // ============== READ OPERATIONS ==============
-  getOrders: async (skip: number = 0, limit: number = 10): Promise<Order[]> => {
+  getOrders: async (skip: number = 0, limit: number = 10, search?: string): Promise<Order[]> => {
     try {
       const response = await axiosInstance.get<Order[]>('/orders', {
         params: {
           skip,
           limit,
+          ...(search && { search }),
         },
       });
       return response.data;

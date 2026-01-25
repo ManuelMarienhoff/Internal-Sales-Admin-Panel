@@ -107,9 +107,24 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
 # LIST ORDERS
 # ==========================================
 @router.get("/", response_model=list[OrderResponse])
-def get_orders(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    """Get list of orders with pagination"""
-    orders = db.query(Order).offset(skip).limit(limit).all()
+def get_orders(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
+    """Get list of orders with pagination and optional search"""
+    query = db.query(Order)
+    
+    # Apply search filter if provided
+    if search:
+        # Check if search is numeric (for order ID search)
+        if search.isdigit():
+            query = query.filter(Order.id == int(search))
+        else:
+            # Search by customer name or last_name (join with Customer)
+            search_filter = f"%{search}%"
+            query = query.join(Customer).filter(
+                (Customer.name.ilike(search_filter)) |
+                (Customer.last_name.ilike(search_filter))
+            )
+    
+    orders = query.offset(skip).limit(limit).all()
     return orders
 
 

@@ -8,6 +8,7 @@ import type { ColumnDef } from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import GenericForm from '../components/ui/GenericForm';
+import SearchBar from '../components/ui/SearchBar';
 import type { FormField } from '../components/ui/GenericForm';
 
 type CustomerFormData = Omit<Customer, 'id' | 'created_at'>;
@@ -17,11 +18,12 @@ const Customers = () => {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // ============== QUERY ==============
   const { data: customers = [], isLoading, error, isError } = useQuery({
-    queryKey: ['customers'],
-    queryFn: () => customerService.getCustomers(0, 50),
+    queryKey: ['customers', searchTerm],
+    queryFn: () => customerService.getCustomers(0, 50, searchTerm),
   });
 
   const formatDate = (dateString: string) => {
@@ -111,6 +113,15 @@ const Customers = () => {
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           New Customer
         </Button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <SearchBar
+          placeholder="Search customers by ID, name, or email..."
+          onSearch={setSearchTerm}
+          initialValue={searchTerm}
+        />
       </div>
 
       {/* Table */}

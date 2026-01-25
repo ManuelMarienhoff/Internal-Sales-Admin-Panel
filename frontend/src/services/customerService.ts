@@ -3,12 +3,13 @@ import type { Customer, CustomerCreate, CustomerUpdate } from '../types/customer
 
 export const customerService = {
   // ============== READ OPERATIONS ==============
-  getCustomers: async (skip: number = 0, limit: number = 10): Promise<Customer[]> => {
+  getCustomers: async (skip: number = 0, limit: number = 10, search?: string): Promise<Customer[]> => {
     try {
       const response = await axiosInstance.get<Customer[]>('/customers', {
         params: {
           skip,
           limit,
+          ...(search && { search }),
         },
       });
       return response.data;

@@ -101,9 +101,20 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 # LIST PRODUCTS 
 # ==========================================
 @router.get("/", response_model=list[ProductResponse])
-def get_products(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    """Get list of products with pagination"""
-    products = db.query(Product).offset(skip).limit(limit).all()
+def get_products(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
+    """Get list of products with pagination and optional search"""
+    query = db.query(Product)
+    
+    # Apply search filter if provided
+    if search:
+        # Check if search is numeric (for ID search)
+        if search.isdigit():
+            query = query.filter(Product.id == int(search))
+        else:
+            # Case-insensitive search by name
+            query = query.filter(Product.name.ilike(f"%{search}%"))
+    
+    products = query.offset(skip).limit(limit).all()
     return products
 
 

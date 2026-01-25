@@ -41,9 +41,25 @@ def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
 # LIST CUSTOMERS 
 # ==========================================
 @router.get("/", response_model=list[CustomerResponse])
-def get_customers(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    """Get list of customers with pagination"""
-    customers = db.query(Customer).offset(skip).limit(limit).all()
+def get_customers(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
+    """Get list of customers with pagination and optional search"""
+    query = db.query(Customer)
+    
+    # Apply search filter if provided
+    if search:
+        # Check if search is numeric (for ID search)
+        if search.isdigit():
+            query = query.filter(Customer.id == int(search))
+        else:
+            # Case-insensitive search by name, last_name, or email
+            search_filter = f"%{search}%"
+            query = query.filter(
+                (Customer.name.ilike(search_filter)) |
+                (Customer.last_name.ilike(search_filter)) |
+                (Customer.email.ilike(search_filter))
+            )
+    
+    customers = query.offset(skip).limit(limit).all()
     return customers
 
 
