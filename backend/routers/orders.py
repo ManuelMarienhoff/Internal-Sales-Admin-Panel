@@ -192,9 +192,24 @@ def update_order_status(order_id: int, order_update: OrderUpdate, db: Session = 
     # Validate and update status if provided
     if order_update.status:
         new_status = OrderStatus(order_update.status)
+        current_status = db_order.status
+        
+        # State Machine: Validate allowed transitions
+        # draft -> confirmed -> completed
+        valid_transitions = {
+            OrderStatus.DRAFT: [OrderStatus.CONFIRMED],
+            OrderStatus.CONFIRMED: [OrderStatus.COMPLETED],
+            OrderStatus.COMPLETED: []
+        }
+        
+        if new_status not in valid_transitions.get(current_status, []):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid status transition. Allowed: draft -> confirmed -> completed"
+            )
         
         # Business rule: Cannot transition to confirmed if order has inactive products
-        if db_order.status == OrderStatus.DRAFT and new_status == OrderStatus.CONFIRMED:
+        if current_status == OrderStatus.DRAFT and new_status == OrderStatus.CONFIRMED:
             # Check if all products in order items are active
             inactive_products = db.query(Product).join(
                 OrderItem, OrderItem.product_id == Product.id

@@ -120,19 +120,20 @@ const OrderDetail = () => {
   // ============== GET AVAILABLE STATUS TRANSITIONS ==============
   const getAvailableStatuses = (): { value: string; label: string }[] => {
     if (!order) return [];
-    switch (order.status) {
-      case 'draft':
-        return [
-          { value: 'confirmed', label: 'Move to Confirmed' },
-          { value: 'completed', label: 'Move to Completed' },
-        ];
-      case 'confirmed':
-        return [{ value: 'completed', label: 'Move to Completed' }];
-      case 'completed':
-        return [];
-      default:
-        return [];
-    }
+    
+    // State Machine: Strictly linear transitions
+    // draft -> confirmed -> completed
+    const transitionMap: { [key: string]: { value: string; label: string }[] } = {
+      draft: [
+        { value: 'confirmed', label: 'Move to Confirmed' },
+      ],
+      confirmed: [
+        { value: 'completed', label: 'Move to Completed' },
+      ],
+      completed: [],
+    };
+    
+    return transitionMap[order.status] || [];
   };
 
   const itemColumns: ColumnDef<OrderItem>[] = [
