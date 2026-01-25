@@ -17,6 +17,8 @@ router = APIRouter(
 # ==========================================
 @router.post("/", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
 def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
+    # --- DEBUG PRINT ---
+    print(f"👀 RECIBIDO EN BACKEND: {customer.dict()}")
     """Create a new customer"""
     # Check if email already exists
     existing_customer = db.query(Customer).filter(Customer.email == customer.email).first()
@@ -27,6 +29,8 @@ def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
         )
     
     db_customer = Customer(
+        company_name=customer.company_name,
+        industry=customer.industry,
         name=customer.name,
         last_name=customer.last_name,
         email=customer.email
@@ -51,6 +55,8 @@ def get_customers(skip: int = 0, limit: int = 10, search: str = None, db: Sessio
         else:
             search_filter = f"%{search}%"
             query = query.filter(
+                (Customer.company_name.ilike(search_filter)) |
+                (Customer.industry.ilike(search_filter)) |
                 (Customer.name.ilike(search_filter)) |
                 (Customer.last_name.ilike(search_filter)) |
                 (Customer.email.ilike(search_filter))

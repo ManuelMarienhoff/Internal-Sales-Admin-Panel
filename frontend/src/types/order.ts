@@ -5,7 +5,6 @@ import type { Customer } from './customer';
 // Item definition when creating an order
 export interface OrderItemCreate {
   product_id: number;
-  quantity: number;
 }
 
 // ============== ORDER ITEM RESPONSE ==============
@@ -40,6 +39,8 @@ export interface Order extends OrderCreate {
   total_amount: number | string;
   created_at: string;
   customer: {
+    company_name: string;
+    industry: string;
     name: string;
     last_name: string;
     email: string;

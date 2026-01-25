@@ -59,7 +59,7 @@ def _remove_product_from_drafts(db: Session, product_id: int) -> list[int]:
         else:
             # Otherwise, recalculate the total and persist the order
             new_total = sum(
-                Decimal(item.quantity) * Decimal(item.unit_price)
+                Decimal(item.unit_price)
                 for item in remaining_items
             )
             draft_order.total_amount = new_total
@@ -87,6 +87,7 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
     
     db_product = Product(
         name=product.name,
+        service_line=product.service_line,
         description=product.description,
         price=product.price,
         is_active=product.is_active
@@ -101,7 +102,7 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 # LIST PRODUCTS 
 # ==========================================
 @router.get("/", response_model=PaginatedResponse[ProductResponse])
-def get_products(skip: int = 0, limit: int = 10, search: str = None, is_active: bool = None, db: Session = Depends(get_db)):
+def get_products(skip: int = 0, limit: int = 10, search: str = None, is_active: bool = None, service_line: str = None, db: Session = Depends(get_db)):
     """Get list of products with pagination, search, optional active filter, and total count"""
     query = db.query(Product)
 
@@ -113,6 +114,9 @@ def get_products(skip: int = 0, limit: int = 10, search: str = None, is_active: 
 
     if is_active is not None:
         query = query.filter(Product.is_active == is_active)
+
+    if service_line is not None:
+        query = query.filter(Product.service_line == service_line)
 
     total = query.count()
     items = query.offset(skip).limit(limit).all()

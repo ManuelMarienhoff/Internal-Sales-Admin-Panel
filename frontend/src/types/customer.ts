@@ -3,6 +3,8 @@ import type { Order } from './order';
 // ============== CUSTOMER CREATE PAYLOAD ==============
 // Sent to backend when creating a new customer
 export interface CustomerCreate {
+  company_name: string;
+  industry: string;
   name: string;
   last_name: string;
   email: string;
@@ -11,6 +13,8 @@ export interface CustomerCreate {
 // ============== CUSTOMER UPDATE PAYLOAD ==============
 // Sent to backend when updating an existing customer
 export interface CustomerUpdate {
+  company_name?: string;
+  industry?: string;
   name?: string;
   last_name?: string;
   email?: string;

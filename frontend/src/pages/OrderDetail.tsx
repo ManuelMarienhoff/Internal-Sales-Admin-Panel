@@ -14,12 +14,12 @@ interface OrderItem {
   id: number;
   product_id: number;
   order_id: number;
-  quantity: number;
   unit_price: string | number;
   created_at: string;
   product: {
     id: number;
     name: string;
+    service_line: string;
     price: string | number;
   };
 }
@@ -138,40 +138,24 @@ const OrderDetail = () => {
 
   const itemColumns: ColumnDef<OrderItem>[] = [
     {
-      header: 'Product',
+      header: 'Service',
       render: (item) => (
-        <button
-          onClick={() => navigate(`/products/${item.product.id}`, { state: { from: location } })}
-          className="font-medium text-pwc-black hover:text-pwc-orange transition cursor-pointer"
-        >
-          {item.product.name}
-        </button>
+        <div>
+          <button
+            onClick={() => navigate(`/products/${item.product.id}`, { state: { from: location } })}
+            className="font-medium text-pwc-black hover:text-pwc-orange transition cursor-pointer"
+          >
+            {item.product.name}
+          </button>
+          <div className="text-xs text-gray-500 mt-1">{item.product.service_line}</div>
+        </div>
       ),
     },
     {
-      header: 'Unit Price',
-      render: (item) => <span>{formatPrice(item.unit_price)}</span>,
-    },
-    {
-      header: 'Quantity',
+      header: 'Fee',
       render: (item) => (
-        <span className="font-semibold text-center">{item.quantity}</span>
+        <span className="font-bold text-pwc-orange text-right block">{formatPrice(item.unit_price)}</span>
       ),
-    },
-    {
-      header: 'Subtotal',
-      render: (item) => {
-        const price =
-          typeof item.unit_price === 'string'
-            ? parseFloat(item.unit_price)
-            : item.unit_price;
-        const subtotal = price * item.quantity;
-        return (
-          <span className="font-bold text-pwc-orange">
-            {formatPrice(subtotal)}
-          </span>
-        );
-      },
     },
   ];
 
@@ -311,7 +295,7 @@ const OrderDetail = () => {
           {/* Order Items Table */}
           <div>
             <h3 className="text-lg font-bold text-pwc-black mb-6 uppercase tracking-wide">
-              Order Items ({order.items?.length || 0})
+              Engagements ({order.items?.length || 0})
             </h3>
 
             {order.items && order.items.length > 0 ? (
@@ -333,19 +317,10 @@ const OrderDetail = () => {
               Summary
             </h3>
 
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 gap-6">
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-none">
                 <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
-                  Total Items
-                </p>
-                <p className="text-2xl font-bold text-pwc-black">
-                  {order.items?.reduce((sum, item) => sum + item.quantity, 0) || 0}
-                </p>
-              </div>
-
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-none">
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
-                  Product Lines
+                  Engagements Count
                 </p>
                 <p className="text-2xl font-bold text-pwc-black">
                   {order.items?.length || 0}
@@ -354,7 +329,7 @@ const OrderDetail = () => {
 
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-none">
                 <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
-                  Grand Total
+                  Deal Value
                 </p>
                 <p className="text-2xl font-bold text-pwc-orange">
                   {formatPrice(order.total_amount)}
@@ -376,7 +351,6 @@ const OrderDetail = () => {
             customerId: order.customer_id,
             items: order.items.map((item) => ({
               product: item.product,
-              quantity: item.quantity,
             })),
           }}
           isEditMode={true}

@@ -46,6 +46,20 @@ const Products = () => {
     return `$${numPrice.toFixed(2)}`;
   };
 
+  const renderServiceLineBadge = (serviceLine: string) => {
+    const palette: Record<string, string> = {
+      Audit: 'bg-blue-100 text-blue-800',
+      Tax: 'bg-green-100 text-green-800',
+      Consulting: 'bg-orange-100 text-orange-800',
+    };
+    const colors = palette[serviceLine] || 'bg-gray-100 text-gray-800';
+    return (
+      <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${colors}`}>
+        {serviceLine}
+      </span>
+    );
+  };
+
   const columns: ColumnDef<Product>[] = [
     {
       header: 'ID',
@@ -53,9 +67,14 @@ const Products = () => {
       className: 'w-16',
     },
     {
-      header: 'Name',
+      header: 'Service',
       accessor: 'name',
       className: 'w-1/4',
+    },
+    {
+      header: 'Service Line',
+      className: 'w-1/5',
+      render: (product) => renderServiceLineBadge(product.service_line),
     },
     {
       header: 'Price',
@@ -87,10 +106,21 @@ const Products = () => {
   const formFields: FormField[] = [
     {
       name: 'name',
-      label: 'Product Name',
+      label: 'Service Name',
       type: 'text',
       required: true,
-      placeholder: 'Enter product name',
+      placeholder: 'Enter service name',
+    },
+    {
+      name: 'service_line',
+      label: 'Service Line',
+      type: 'select',
+      required: true,
+      options: [
+        { value: 'Audit', label: 'Audit' },
+        { value: 'Tax', label: 'Tax' },
+        { value: 'Consulting', label: 'Consulting' },
+      ],
     },
     {
       name: 'price',
@@ -133,16 +163,16 @@ const Products = () => {
     <div className="px-12 py-12">
       {/* Header with Title and Button */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-serif font-bold text-pwc-black">Products</h1>
+        <h1 className="text-4xl font-serif font-bold text-pwc-black">Services Catalog</h1>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-          New Product
+          New Service
         </Button>
       </div>
 
       {/* Search Bar (global) */}
       <div className="mb-6">
         <SearchBar
-          placeholder="Search products by ID or name..."
+          placeholder="Search services by ID or name..."
           onSearch={handleSearch}
           initialValue={searchTerm}
         />
@@ -161,7 +191,7 @@ const Products = () => {
             setPage(1);
           }}
         >
-          Active Products
+          Active Services
         </button>
         <button
           type="button"
@@ -174,7 +204,7 @@ const Products = () => {
             setPage(1);
           }}
         >
-          Inactive Products
+          Inactive Services
         </button>
       </div>
 
@@ -208,7 +238,7 @@ const Products = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Add New Product"
+        title="Add New Service"
       >
         {formError && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-none text-red-700">

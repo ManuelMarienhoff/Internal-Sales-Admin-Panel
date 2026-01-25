@@ -70,18 +70,27 @@ const Orders = () => {
 
   const columns: ColumnDef<Order>[] = [
     {
-      header: 'Order ID',
-      accessor: 'id',
+      header: 'ID',
+      render: (order) => <span className="font-semibold text-pwc-black">#{order.id}</span>,
     },
     {
-      header: 'Customer',
+      header: 'Company',
       className: 'w-1/4',
+      render: (order) => (
+        <div>
+          <div className="font-semibold text-gray-900">{order.customer.company_name}</div>
+          <div className="text-xs text-gray-600">{order.customer.industry}</div>
+        </div>
+      ),
+    },
+    {
+      header: 'Contact',
       render: (order) => (
         <div>
           <div className="font-medium text-gray-900">
             {order.customer.name} {order.customer.last_name}
           </div>
-          <div className="text-sm text-gray-500">{order.customer.email}</div>
+          <div className="text-xs text-gray-500">{order.customer.email}</div>
         </div>
       ),
     },
@@ -94,13 +103,13 @@ const Orders = () => {
       ),
     },
     {
-      header: 'Total Amount',
+      header: 'Total',
       render: (order) => (
         <span className="font-semibold">{formatPrice(order.total_amount)}</span>
       ),
     },
     {
-      header: 'Created At',
+      header: 'Date',
       render: (order) => (
         <span className="text-gray-700">{formatDate(order.created_at)}</span>
       ),

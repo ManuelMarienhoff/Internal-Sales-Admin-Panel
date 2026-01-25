@@ -2,6 +2,7 @@
 // Sent to backend when creating a new product
 export interface ProductCreate {
   name: string;
+  service_line: string;
   description?: string;
   price: number;
   is_active?: boolean;
@@ -11,6 +12,7 @@ export interface ProductCreate {
 // Sent to backend when updating an existing product
 export interface ProductUpdate {
   name?: string;
+  service_line?: string;
   description?: string;
   price?: number;
   is_active?: boolean;

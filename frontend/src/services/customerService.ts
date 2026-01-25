@@ -6,7 +6,7 @@ export const customerService = {
   // ============== READ OPERATIONS ==============
   getCustomers: async (skip: number = 0, limit: number = 10, search?: string): Promise<PaginatedResponse<Customer>> => {
     try {
-      const response = await axiosInstance.get<PaginatedResponse<Customer>>('/customers', {
+      const response = await axiosInstance.get<PaginatedResponse<Customer>>('/customers/', {
         params: {
           skip,
           limit,
@@ -21,7 +21,7 @@ export const customerService = {
 
   getCustomerById: async (id: number): Promise<Customer> => {
     try {
-      const response = await axiosInstance.get<Customer>(`/customers/${id}`);
+      const response = await axiosInstance.get<Customer>(`/customers/${id}/`);
       return response.data;
     } catch (error) {
       throw new Error(`Failed to fetch customer: ${error}`);
@@ -31,7 +31,7 @@ export const customerService = {
   // ============== CREATE OPERATION ==============
   createCustomer: async (customerData: CustomerCreate): Promise<Customer> => {
     try {
-      const response = await axiosInstance.post<Customer>('/customers', customerData);
+      const response = await axiosInstance.post<Customer>('/customers/', customerData);
       return response.data;
     } catch (error) {
       throw new Error(`Failed to create customer: ${error}`);
@@ -41,7 +41,7 @@ export const customerService = {
   // ============== UPDATE OPERATION ==============
   updateCustomer: async (id: number, customerData: CustomerUpdate): Promise<Customer> => {
     try {
-      const response = await axiosInstance.patch<Customer>(`/customers/${id}`, customerData);
+      const response = await axiosInstance.patch<Customer>(`/customers/${id}/`, customerData);
       return response.data;
     } catch (error) {
       throw new Error(`Failed to update customer: ${error}`);
@@ -51,7 +51,7 @@ export const customerService = {
   // ============== DELETE OPERATION ==============
   deleteCustomer: async (id: number): Promise<void> => {
     try {
-      await axiosInstance.delete(`/customers/${id}`);
+      await axiosInstance.delete(`/customers/${id}/`);
     } catch (error) {
       throw new Error(`Failed to delete customer: ${error}`);
     }

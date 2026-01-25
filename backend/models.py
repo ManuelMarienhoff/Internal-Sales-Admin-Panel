@@ -11,6 +11,8 @@ class Customer(Base):
     __tablename__ = "customers"
     
     id = Column(Integer, primary_key=True, index=True)
+    company_name = Column(String(150), nullable=False, index=True)
+    industry = Column(String(100), nullable=False, index=True)
     name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False, index=True)
@@ -29,6 +31,7 @@ class Product(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(150), nullable=False, index=True)
+    service_line = Column(String(100), nullable=False, index=True)
     description = Column(String(500))
     # Use Numeric for decimal precision (avoid rounding errors with float)
     price = Column(Numeric(10, 2), nullable=False)
@@ -74,7 +77,6 @@ class OrderItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
     product_id = Column(Integer, ForeignKey("products.id", ondelete="RESTRICT"), nullable=False, index=True)
-    quantity = Column(Integer, nullable=False)
     # unit_price: product price at the time of purchase to maintain history
     unit_price = Column(Numeric(10, 2), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

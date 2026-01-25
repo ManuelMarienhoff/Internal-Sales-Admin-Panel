@@ -56,13 +56,12 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
                 )
             
             # Calculate item subtotal with frozen price (FROM DB, NOT FRONTEND)
-            item_subtotal = product.price * item.quantity
+            item_subtotal = product.price
             total_amount += item_subtotal
             
             # Store product data for later use
             order_items_data.append({
                 "product": product,
-                "quantity": item.quantity,
                 "unit_price": product.price
             })
         
@@ -80,7 +79,6 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
             db_order_item = OrderItem(
                 order_id=db_order.id,
                 product_id=item_data["product"].id,
-                quantity=item_data["quantity"],
                 unit_price=item_data["unit_price"]
             )
             db.add(db_order_item)
@@ -199,13 +197,12 @@ def update_order_status(order_id: int, order_update: OrderUpdate, db: Session = 
                     detail=f"Product '{product.name}' is inactive and cannot be ordered"
                 )
             
-            item_subtotal = product.price * item.quantity
+            item_subtotal = product.price
             total_amount += item_subtotal
             
             db_order_item = OrderItem(
                 order_id=order_id,
                 product_id=item.product_id,
-                quantity=item.quantity,
                 unit_price=product.price
             )
             db.add(db_order_item)

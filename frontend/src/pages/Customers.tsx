@@ -39,32 +39,47 @@ const Customers = () => {
     placeholderData: keepPreviousData,
   });
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
   const columns: ColumnDef<Customer>[] = [
     {
-      header: 'Name',
-      render: (customer) => `${customer.name} ${customer.last_name}`,
+      header: 'Company',
+      accessor: 'company_name',
     },
     {
-      header: 'Email',
-      accessor: 'email',
-    },
-    {
-      header: 'Created At',
+      header: 'Industry',
       render: (customer) => (
-        <span className="text-gray-700">{formatDate(customer.created_at)}</span>
+        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+          {customer.industry}
+        </span>
       ),
+    },
+    {
+      header: 'Contact',
+      render: (customer) => `${customer.name} ${customer.last_name}`,
     },
   ];
 
   const formFields: FormField[] = [
+    {
+      name: 'company_name',
+      label: 'Company Name',
+      type: 'text',
+      required: true,
+      placeholder: 'Enter company name',
+    },
+    {
+      name: 'industry',
+      label: 'Industry',
+      type: 'select',
+      required: true,
+      options: [
+        { value: 'Technology', label: 'Technology' },
+        { value: 'Finance', label: 'Finance' },
+        { value: 'Retail', label: 'Retail' },
+        { value: 'Healthcare', label: 'Healthcare' },
+        { value: 'Energy', label: 'Energy' },
+        { value: 'Manufacturing', label: 'Manufacturing' },
+      ],
+    },
     {
       name: 'name',
       label: 'First Name',
