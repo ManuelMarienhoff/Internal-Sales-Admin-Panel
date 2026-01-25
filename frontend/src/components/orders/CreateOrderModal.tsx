@@ -17,12 +17,16 @@ interface CreateOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOrderCreated: (orderId: number) => void;
+  initialData?: { orderId: number; customerId: number; items: CartItem[] };
+  isEditMode?: boolean;
 }
 
 const CreateOrderModal = ({
   isOpen,
   onClose,
   onOrderCreated,
+  initialData,
+  isEditMode = false,
 }: CreateOrderModalProps) => {
   // ============== QUERIES ==============
   const { data: customers = [], isLoading: loadingCustomers } = useQuery({
@@ -54,11 +58,26 @@ const CreateOrderModal = ({
     },
   });
 
+  const updateOrderMutation = useMutation({
+    mutationFn: (orderData: OrderCreate) =>
+      orderService.updateOrder(initialData?.orderId || 0, { items: orderData.items }),
+    onSuccess: (updatedOrder) => {
+      setSuccessMessage(`Order #${updatedOrder.id} updated successfully!`);
+      setTimeout(() => {
+        onOrderCreated(updatedOrder.id);
+        handleClose();
+      }, 1500);
+    },
+    onError: (err) => {
+      setError(err instanceof Error ? err.message : 'Failed to update order');
+    },
+  });
+
   // ============== LOCAL STATE ==============
-  const [customerId, setCustomerId] = useState<number | null>(null);
+  const [customerId, setCustomerId] = useState<number | null>(initialData?.customerId || null);
   const [currentProduct, setCurrentProduct] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(initialData?.items || []);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -164,23 +183,31 @@ const CreateOrderModal = ({
       })),
     };
 
-    createOrderMutation.mutate(orderData);
+    if (isEditMode && initialData) {
+      updateOrderMutation.mutate(orderData);
+    } else {
+      createOrderMutation.mutate(orderData);
+    }
   };
 
   // ============== CLOSE HANDLER ==============
   const handleClose = () => {
-    setCustomerId(null);
+    if (!isEditMode) {
+      setCustomerId(null);
+      setCart([]);
+    }
     setCurrentProduct(null);
     setQuantity(1);
-    setCart([]);
     setError(null);
     setSuccessMessage(null);
     onClose();
   };
 
   // ============== RENDER ==============
+  const modalTitle = isEditMode ? `Edit Order #${initialData?.orderId}` : 'Create New Order';
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create New Order">
+    <Modal isOpen={isOpen} onClose={handleClose} title={modalTitle}>
       <div className="space-y-6 max-h-[80vh] overflow-y-auto">
         {/* SUCCESS MESSAGE */}
         {successMessage && (
@@ -214,7 +241,7 @@ const CreateOrderModal = ({
                   setCustomerId(Number(e.target.value) || null);
                   setError(null);
                 }}
-                disabled={createOrderMutation.isPending}
+                disabled={createOrderMutation.isPending || isEditMode}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-none focus:border-pwc-orange focus:outline-none focus:ring-2 focus:ring-pwc-orange bg-white text-pwc-black font-medium disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">-- Select a customer --</option>
@@ -224,6 +251,11 @@ const CreateOrderModal = ({
                   </option>
                 ))}
               </select>
+              {isEditMode && (
+                <p className="text-xs text-gray-600 mt-1">
+                  Customer cannot be changed when editing an order
+                </p>
+              )}
               {customerId && (
                 <div className="bg-orange-50 p-3 border border-orange-200 rounded-none">
                   <p className="text-sm font-semibold text-pwc-black">
@@ -251,7 +283,7 @@ const CreateOrderModal = ({
                       setCurrentProduct(Number(e.target.value) || null);
                       setError(null);
                     }}
-                    disabled={createOrderMutation.isPending || !customerId}
+                    disabled={createOrderMutation.isPending || updateOrderMutation.isPending || !customerId}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-none focus:border-pwc-orange focus:outline-none focus:ring-2 focus:ring-pwc-orange bg-white text-pwc-black disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value="">
@@ -282,7 +314,7 @@ const CreateOrderModal = ({
                       setQuantity(isNaN(val) || val < 1 ? 1 : val);
                     }}
                     onFocus={(e) => e.target.select()}
-                    disabled={createOrderMutation.isPending}
+                    disabled={createOrderMutation.isPending || updateOrderMutation.isPending}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-none focus:border-pwc-orange focus:outline-none focus:ring-2 focus:ring-pwc-orange text-pwc-black disabled:bg-gray-100 disabled:cursor-not-allowed"
                   />
                 </div>
@@ -291,7 +323,7 @@ const CreateOrderModal = ({
                 <Button
                   variant="primary"
                   onClick={addToCart}
-                  disabled={createOrderMutation.isPending || !currentProduct || quantity <= 0}
+                  disabled={createOrderMutation.isPending || updateOrderMutation.isPending || !currentProduct || quantity <= 0}
                   className="w-full font-bold"
                 >
                   + Add to Cart
@@ -376,7 +408,7 @@ const CreateOrderModal = ({
                                         item.quantity - 1
                                       )
                                     }
-                                    disabled={createOrderMutation.isPending}
+                                    disabled={createOrderMutation.isPending || updateOrderMutation.isPending}
                                     className="w-6 h-6 flex items-center justify-center border border-gray-300 hover:bg-red-100 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-gray-600"
                                     title="Decrease quantity"
                                   >
@@ -392,7 +424,7 @@ const CreateOrderModal = ({
                                         item.quantity + 1
                                       )
                                     }
-                                    disabled={createOrderMutation.isPending}
+                                    disabled={createOrderMutation.isPending || updateOrderMutation.isPending}
                                     className="w-6 h-6 flex items-center justify-center border border-gray-300 hover:bg-pwc-orange hover:text-white hover:border-pwc-orange disabled:opacity-50 disabled:cursor-not-allowed font-bold text-pwc-orange"
                                     title="Increase quantity"
                                   >
@@ -406,7 +438,7 @@ const CreateOrderModal = ({
                               <td className="px-4 py-3 text-sm text-center">
                                 <button
                                   onClick={() => removeFromCart(item.product.id)}
-                                  disabled={createOrderMutation.isPending}
+                                  disabled={createOrderMutation.isPending || updateOrderMutation.isPending}
                                   className="text-red-600 hover:text-red-800 font-bold hover:underline disabled:opacity-50 disabled:cursor-not-allowed text-xs uppercase"
                                   title="Remove from cart"
                                 >
@@ -454,7 +486,7 @@ const CreateOrderModal = ({
               <Button
                 variant="secondary"
                 onClick={handleClose}
-                disabled={createOrderMutation.isPending}
+                disabled={createOrderMutation.isPending || updateOrderMutation.isPending}
                 className="font-bold"
               >
                 Cancel
@@ -463,20 +495,19 @@ const CreateOrderModal = ({
                 variant="primary"
                 onClick={handleSubmit}
                 disabled={
-                  createOrderMutation.isPending ||
+                  (isEditMode ? updateOrderMutation.isPending : createOrderMutation.isPending) ||
                   !customerId ||
                   cart.length === 0
                 }
                 className="font-bold"
               >
-                {createOrderMutation.isPending ? (
-                  <span className="flex items-center gap-2">
-                    <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    Processing...
-                  </span>
-                ) : (
-                  'Confirm & Create Order'
-                )}
+                {isEditMode
+                  ? updateOrderMutation.isPending
+                    ? 'Updating...'
+                    : 'Update Order'
+                  : createOrderMutation.isPending
+                    ? 'Creating...'
+                    : 'Confirm & Create Order'}
               </Button>
             </div>
           </>

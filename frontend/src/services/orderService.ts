@@ -37,12 +37,30 @@ export const orderService = {
   },
 
   // ============== UPDATE OPERATION ==============
+  updateOrder: async (id: number, orderData: Partial<OrderUpdate>): Promise<OrderWithDetails> => {
+    try {
+      const response = await axiosInstance.patch<OrderWithDetails>(`/orders/${id}`, orderData);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to update order: ${error}`);
+    }
+  },
+
   updateOrderStatus: async (id: number, orderData: OrderUpdate): Promise<Order> => {
     try {
       const response = await axiosInstance.patch<Order>(`/orders/${id}`, orderData);
       return response.data;
     } catch (error) {
       throw new Error(`Failed to update order: ${error}`);
+    }
+  },
+
+  // ============== DELETE OPERATION ==============
+  deleteOrder: async (id: number): Promise<void> => {
+    try {
+      await axiosInstance.delete(`/orders/${id}`);
+    } catch (error) {
+      throw new Error(`Failed to delete order: ${error}`);
     }
   },
 };

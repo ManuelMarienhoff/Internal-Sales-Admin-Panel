@@ -107,6 +107,8 @@ class OrderUpdate(BaseModel):
     """Schema for updating an order"""
     # Validation: Only allows specifically defined status strings
     status: Optional[str] = Field(None, pattern="^(draft|confirmed|completed)$")
+    # Validation: Optional list of items for updating order items (only for draft orders)
+    items: Optional[List[OrderItemCreate]] = None
 
 
 class OrderResponse(BaseModel):

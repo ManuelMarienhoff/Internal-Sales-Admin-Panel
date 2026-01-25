@@ -26,9 +26,10 @@ export interface OrderCreate {
 }
 
 // ============== ORDER UPDATE PAYLOAD ==============
-// Sent to backend when updating an order status
+// Sent to backend when updating an order (status or items)
 export interface OrderUpdate {
   status?: 'draft' | 'confirmed' | 'completed';
+  items?: OrderItemCreate[];
 }
 
 // ============== ORDER RESPONSE ==============

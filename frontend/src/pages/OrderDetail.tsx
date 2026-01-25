@@ -1,11 +1,14 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { orderService } from '../services/orderService';
 import type { OrderWithDetails } from '../types/order';
 import DetailLayout from '../components/ui/DetailLayout';
 import Button from '../components/ui/Button';
 import Table from '../components/ui/Table';
 import type { ColumnDef } from '../components/ui/Table';
+import CreateOrderModal from '../components/orders/CreateOrderModal';
+import Modal from '../components/ui/Modal';
 
 interface OrderItem {
   id: number;
@@ -26,10 +29,47 @@ const OrderDetail = () => {
   const orderId = Number(id);
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
+  // ============== STATE ==============
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [statusChangeSelect, setStatusChangeSelect] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
+
+  // ============== QUERIES ==============
   const { data: order, isLoading, error, isError } = useQuery({
     queryKey: ['order', orderId],
     queryFn: () => orderService.getOrderById(orderId) as Promise<OrderWithDetails>,
+  });
+
+  // ============== MUTATIONS ==============
+  const updateStatusMutation = useMutation({
+    mutationFn: (newStatus: string) =>
+      orderService.updateOrder(orderId, { status: newStatus as 'draft' | 'confirmed' | 'completed' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+      setStatusChangeSelect(null);
+      setStatusError(null);
+    },
+    onError: (err: any) => {
+      let msg = 'Failed to update status';
+      if (err?.response?.data?.detail) msg = err.response.data.detail;
+      else if (err?.message) msg = err.message;
+      setStatusError(msg);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => orderService.deleteOrder(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      navigate('/orders');
+    },
+    onError: (err) => {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete order');
+    },
   });
 
   const formatPrice = (price: string | number) => {
@@ -55,6 +95,43 @@ const OrderDetail = () => {
         return 'bg-green-50 text-green-800';
       default:
         return 'bg-gray-50 text-gray-800';
+    }
+  };
+
+  // ============== HANDLERS ==============
+  const handleEditSubmit = () => {
+    // Invalidate the order query to refresh data from server
+    queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+    setIsEditModalOpen(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setDeleteError(null);
+    deleteMutation.mutate();
+    setIsDeleteConfirmOpen(false);
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    if (order && getAvailableStatuses().some(s => s.value === newStatus)) {
+      updateStatusMutation.mutate(newStatus);
+    }
+  };
+
+  // ============== GET AVAILABLE STATUS TRANSITIONS ==============
+  const getAvailableStatuses = (): { value: string; label: string }[] => {
+    if (!order) return [];
+    switch (order.status) {
+      case 'draft':
+        return [
+          { value: 'confirmed', label: 'Move to Confirmed' },
+          { value: 'completed', label: 'Move to Completed' },
+        ];
+      case 'confirmed':
+        return [{ value: 'completed', label: 'Move to Completed' }];
+      case 'completed':
+        return [];
+      default:
+        return [];
     }
   };
 
@@ -104,12 +181,47 @@ const OrderDetail = () => {
       isLoading={isLoading}
       error={isError ? error : null}
       actions={
-        order && order.status === 'draft' && (
-          <div className="flex gap-3">
-            <Button variant="secondary">Edit</Button>
-            <Button variant="secondary" className="text-red-600 hover:bg-red-50">
-              Cancel Order
-            </Button>
+        order && (
+          <div className="flex gap-3 flex-wrap">
+            {order.status === 'draft' && (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsEditModalOpen(true)}
+                  disabled={isLoading}
+                >
+                  Edit Items
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="text-red-600 hover:bg-red-50"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                  disabled={isLoading}
+                >
+                  Delete Order
+                </Button>
+              </>
+            )}
+            {getAvailableStatuses().length > 0 && (
+              <select
+                value={statusChangeSelect || ''}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleStatusChange(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                disabled={updateStatusMutation.isPending || isLoading}
+                className="px-3 py-2 border border-gray-300 rounded-none bg-white text-sm font-medium text-pwc-black hover:border-pwc-orange focus:border-pwc-orange focus:outline-none focus:ring-2 focus:ring-pwc-orange disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">Change Status...</option>
+                {getAvailableStatuses().map((status) => (
+                  <option key={status.value} value={status.value}>
+                    {status.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         )
       }
@@ -251,6 +363,64 @@ const OrderDetail = () => {
           </div>
         </div>
       )}
+
+      {/* EDIT MODAL */}
+      {order && (
+        <CreateOrderModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onOrderCreated={handleEditSubmit}
+          initialData={{
+            orderId: order.id,
+            customerId: order.customer_id,
+            items: order.items.map((item) => ({
+              product: item.product,
+              quantity: item.quantity,
+            })),
+          }}
+          isEditMode={true}
+        />
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      <Modal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        title="Delete Order"
+      >
+        <div className="space-y-6">
+          {deleteError && (
+            <div className="p-4 bg-red-50 border border-red-300 rounded text-red-700 text-sm">
+              {deleteError}
+            </div>
+          )}
+          {statusError && (
+            <div className="p-4 bg-red-50 border border-red-300 rounded text-red-700 text-sm mb-4">
+              {statusError}
+            </div>
+          )}
+          <p className="text-gray-700">
+            Are you sure you want to delete Order <span className="font-bold">#{order?.id}</span>? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setIsDeleteConfirmOpen(false)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleDeleteConfirm}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete Order'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </DetailLayout>
   );
 };

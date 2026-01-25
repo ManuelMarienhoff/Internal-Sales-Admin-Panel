@@ -137,8 +137,9 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
 @router.patch("/{order_id}", response_model=OrderResponse)
 def update_order_status(order_id: int, order_update: OrderUpdate, db: Session = Depends(get_db)):
     """
-    Update order status with business logic validation.
-    - Only draft orders can be edited/confirmed
+    Update order status or items with business logic validation.
+    - Only draft orders can have items edited
+    - Any order can have status updated if transitioning to valid next status
     """
     db_order = db.query(Order).filter(Order.id == order_id).first()
     if not db_order:
@@ -147,19 +148,104 @@ def update_order_status(order_id: int, order_update: OrderUpdate, db: Session = 
             detail=f"Order with ID {order_id} not found"
         )
     
-    # Business rule: Only draft orders can be edited
-    if db_order.status != OrderStatus.DRAFT:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot edit order with status '{db_order.status.value}'. Only draft orders can be modified."
-        )
+    # If updating items, only draft orders can be modified
+    if order_update.items:
+        if db_order.status != OrderStatus.DRAFT:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot edit items of order with status '{db_order.status.value}'. Only draft orders can have items modified."
+            )
+        
+        # Delete existing items and create new ones
+        db.query(OrderItem).filter(OrderItem.order_id == order_id).delete()
+        
+        total_amount = Decimal("0.00")
+        
+        for item in order_update.items:
+            product = db.query(Product).filter(Product.id == item.product_id).first()
+            
+            if not product:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Product with ID {item.product_id} not found"
+                )
+            
+            if not product.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Product '{product.name}' is inactive and cannot be ordered"
+                )
+            
+            item_subtotal = product.price * item.quantity
+            total_amount += item_subtotal
+            
+            db_order_item = OrderItem(
+                order_id=order_id,
+                product_id=item.product_id,
+                quantity=item.quantity,
+                unit_price=product.price
+            )
+            db.add(db_order_item)
+        
+        db_order.total_amount = total_amount
     
     # Validate and update status if provided
     if order_update.status:
         new_status = OrderStatus(order_update.status)
+        
+        # Business rule: Cannot transition to confirmed if order has inactive products
+        if db_order.status == OrderStatus.DRAFT and new_status == OrderStatus.CONFIRMED:
+            # Check if all products in order items are active
+            inactive_products = db.query(Product).join(
+                OrderItem, OrderItem.product_id == Product.id
+            ).filter(
+                OrderItem.order_id == order_id,
+                Product.is_active == False
+            ).all()
+            
+            if inactive_products:
+                inactive_names = ', '.join([p.name for p in inactive_products])
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Cannot confirm order with inactive products: {inactive_names}. Please remove these items before confirming."
+                )
+        
         db_order.status = new_status
     
     db.add(db_order)
     db.commit()
     db.refresh(db_order)
     return db_order
+
+
+# ==========================================
+# DELETE ORDER
+# ==========================================
+@router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_order(order_id: int, db: Session = Depends(get_db)):
+    """
+    Delete an order.
+    - Only draft orders can be deleted
+    """
+    db_order = db.query(Order).filter(Order.id == order_id).first()
+    if not db_order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Order with ID {order_id} not found"
+        )
+    
+    # Business rule: Only draft orders can be deleted
+    if db_order.status != OrderStatus.DRAFT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete order with status '{db_order.status.value}'. Only draft orders can be deleted."
+        )
+    
+    # Delete associated items first
+    db.query(OrderItem).filter(OrderItem.order_id == order_id).delete()
+    
+    # Delete the order
+    db.delete(db_order)
+    db.commit()
+    
+    return None
