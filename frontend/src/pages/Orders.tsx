@@ -1,24 +1,37 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { orderService } from '../services/orderService';
 import type { Order } from '../types/order';
 import Table from '../components/ui/Table';
 import type { ColumnDef } from '../components/ui/Table';
 import Button from '../components/ui/Button';
 import SearchBar from '../components/ui/SearchBar';
+import Pagination from '../components/ui/Pagination';
 import CreateOrderModal from '../components/orders/CreateOrderModal';
+import type { PaginatedResponse } from '../types/pagination';
 
 const Orders = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
+
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
+    setPage(1);
+  }, []);
 
   // ============== QUERY ==============
-  const { data: orders = [], isLoading, error, isError } = useQuery({
-    queryKey: ['orders', searchTerm],
-    queryFn: () => orderService.getOrders(0, 50, searchTerm),
+  const { data, error, isError, isFetching } = useQuery<PaginatedResponse<Order>>({
+    queryKey: ['orders', searchTerm, page, pageSize],
+    queryFn: () => {
+      const skip = (page - 1) * pageSize;
+      return orderService.getOrders(skip, pageSize, searchTerm);
+    },
+    placeholderData: keepPreviousData,
   });
 
   // ============== HANDLERS ==============
@@ -86,24 +99,6 @@ const Orders = () => {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="px-12 py-12">
-        <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Orders</h1>
-        <div className="text-center text-gray-600">Loading orders...</div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="px-12 py-12">
-        <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Orders</h1>
-        <div className="text-center text-red-600">Error: {error instanceof Error ? error.message : 'Failed to load orders'}</div>
-      </div>
-    );
-  }
-
   return (
     <div className="px-12 py-12">
       {/* Header with Title and Button */}
@@ -118,18 +113,36 @@ const Orders = () => {
       <div className="mb-6">
         <SearchBar
           placeholder="Search orders by ID or customer name..."
-          onSearch={setSearchTerm}
+          onSearch={handleSearch}
           initialValue={searchTerm}
         />
       </div>
 
-      {/* Table */}
-      <Table 
-        data={orders} 
-        columns={columns} 
-        emptyMessage="No orders found"
-        onRowClick={(order) => navigate(`/orders/${order.id}`)}
-      />
+      {isError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700">
+          Error: {error instanceof Error ? error.message : 'Failed to load orders'}
+        </div>
+      )}
+
+      {/* Table and Pagination Container */}
+      <div className="flex flex-col justify-between min-h-[600px]">
+        {/* Table */}
+        <div className={isFetching ? 'opacity-50 transition-opacity' : ''}>
+          <Table 
+            data={data?.items ?? []} 
+            columns={columns} 
+            emptyMessage="No orders found"
+            onRowClick={(order) => navigate(`/orders/${order.id}`)}
+          />
+        </div>
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={page}
+          totalPages={data?.pages ?? 1}
+          onPageChange={setPage}
+        />
+      </div>
 
       {/* Create Order Modal */}
       <CreateOrderModal

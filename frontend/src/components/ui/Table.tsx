@@ -5,6 +5,7 @@ export interface ColumnDef<T> {
   accessor?: keyof T;
   render?: (row: T, index: number) => React.ReactNode;
   width?: string;
+  className?: string;
 }
 
 interface TableProps<T> {
@@ -30,7 +31,7 @@ const Table = <T extends { id?: number }>({
 
   return (
     <div className="overflow-x-auto border border-gray-300">
-      <table className="w-full border-collapse">
+      <table className="w-full border-collapse table-fixed">
         {/* Header */}
         <thead>
           <tr className="bg-pwc-orange">
@@ -39,7 +40,7 @@ const Table = <T extends { id?: number }>({
                 key={idx}
                 className={`px-6 py-4 text-left text-pwc-black font-bold ${
                   idx < columns.length - 1 ? 'border-r border-white' : ''
-                } ${column.width || ''}`}
+                } ${column.width || ''} ${column.className || ''}`}
               >
                 {column.header}
               </th>

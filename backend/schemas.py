@@ -1,7 +1,21 @@
 from pydantic import BaseModel, EmailStr, Field
+from pydantic.generics import GenericModel
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Generic, TypeVar
 from decimal import Decimal
+
+
+# Generic type for paginated responses
+T = TypeVar("T")
+
+
+class PaginatedResponse(GenericModel, Generic[T]):
+    """Generic paginated response wrapper"""
+    items: List[T]
+    total: int
+    page: int
+    size: int
+    pages: int
 
 
 # ============== CUSTOMER SCHEMAS ==============

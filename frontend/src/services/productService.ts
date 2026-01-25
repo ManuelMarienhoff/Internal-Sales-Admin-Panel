@@ -1,11 +1,12 @@
 import axiosInstance from '../api/axios';
 import type { Product, ProductCreate, ProductUpdate } from '../types/product';
+import type { PaginatedResponse } from '../types/pagination';
 
 export const productService = {
   // ============== READ OPERATIONS ==============
-  getProducts: async (skip: number = 0, limit: number = 10, search?: string): Promise<Product[]> => {
+  getProducts: async (skip: number = 0, limit: number = 10, search?: string): Promise<PaginatedResponse<Product>> => {
     try {
-      const response = await axiosInstance.get<Product[]>('/products', {
+      const response = await axiosInstance.get<PaginatedResponse<Product>>('/products', {
         params: {
           skip,
           limit,

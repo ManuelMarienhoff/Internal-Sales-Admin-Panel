@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db
 from models import Customer
-from schemas import CustomerCreate, CustomerUpdate, CustomerResponse, CustomerWithOrders
+from schemas import CustomerCreate, CustomerUpdate, CustomerResponse, CustomerWithOrders, PaginatedResponse
 
 router = APIRouter(
     prefix="/api/customers",
@@ -40,27 +40,35 @@ def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
 # ==========================================
 # LIST CUSTOMERS 
 # ==========================================
-@router.get("/", response_model=list[CustomerResponse])
+@router.get("/", response_model=PaginatedResponse[CustomerResponse])
 def get_customers(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
-    """Get list of customers with pagination and optional search"""
+    """Get list of customers with pagination, search, and total count"""
     query = db.query(Customer)
-    
-    # Apply search filter if provided
+
     if search:
-        # Check if search is numeric (for ID search)
         if search.isdigit():
             query = query.filter(Customer.id == int(search))
         else:
-            # Case-insensitive search by name, last_name, or email
             search_filter = f"%{search}%"
             query = query.filter(
                 (Customer.name.ilike(search_filter)) |
                 (Customer.last_name.ilike(search_filter)) |
                 (Customer.email.ilike(search_filter))
             )
-    
-    customers = query.offset(skip).limit(limit).all()
-    return customers
+
+    total = query.count()
+    items = query.offset(skip).limit(limit).all()
+
+    page = (skip // limit) + 1 if limit else 1
+    pages = (total + limit - 1) // limit if limit else 1
+
+    return PaginatedResponse[CustomerResponse](
+        items=items,
+        total=total,
+        page=page,
+        size=limit,
+        pages=pages
+    )
 
 
 # ==========================================

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import type { KeyboardEvent } from 'react';
 
 interface SearchBarProps {
   placeholder: string;
@@ -8,9 +9,16 @@ interface SearchBarProps {
 
 const SearchBar = ({ placeholder, onSearch, initialValue = '' }: SearchBarProps) => {
   const [value, setValue] = useState(initialValue);
+  const isFirstRender = useRef(true);
 
   // Debounce implementation
   useEffect(() => {
+    // Skip the very first render when the value is empty to avoid unnecessary search
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      if (!value) return undefined;
+    }
+
     const timer = setTimeout(() => {
       onSearch(value);
     }, 400); // 400ms debounce
@@ -18,7 +26,7 @@ const SearchBar = ({ placeholder, onSearch, initialValue = '' }: SearchBarProps)
     return () => clearTimeout(timer);
   }, [value, onSearch]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       onSearch(value);
     }

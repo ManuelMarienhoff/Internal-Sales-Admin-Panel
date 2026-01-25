@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import get_db
 from models import Product, Order, OrderItem, OrderStatus
-from schemas import ProductCreate, ProductUpdate, ProductResponse
+from schemas import ProductCreate, ProductUpdate, ProductResponse, PaginatedResponse
 from decimal import Decimal
 
 router = APIRouter(
@@ -100,22 +100,30 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
 # ==========================================
 # LIST PRODUCTS 
 # ==========================================
-@router.get("/", response_model=list[ProductResponse])
+@router.get("/", response_model=PaginatedResponse[ProductResponse])
 def get_products(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
-    """Get list of products with pagination and optional search"""
+    """Get list of products with pagination, search, and total count"""
     query = db.query(Product)
-    
-    # Apply search filter if provided
+
     if search:
-        # Check if search is numeric (for ID search)
         if search.isdigit():
             query = query.filter(Product.id == int(search))
         else:
-            # Case-insensitive search by name
             query = query.filter(Product.name.ilike(f"%{search}%"))
-    
-    products = query.offset(skip).limit(limit).all()
-    return products
+
+    total = query.count()
+    items = query.offset(skip).limit(limit).all()
+
+    page = (skip // limit) + 1 if limit else 1
+    pages = (total + limit - 1) // limit if limit else 1
+
+    return PaginatedResponse[ProductResponse](
+        items=items,
+        total=total,
+        page=page,
+        size=limit,
+        pages=pages
+    )
 
 
 # ==========================================

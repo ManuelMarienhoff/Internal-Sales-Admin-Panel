@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from decimal import Decimal
 from database import get_db
 from models import Order, OrderItem, Customer, Product, OrderStatus
-from schemas import OrderCreate, OrderUpdate, OrderResponse, OrderWithDetails
+from schemas import OrderCreate, OrderUpdate, OrderResponse, OrderWithDetails, PaginatedResponse
 
 router = APIRouter(
     prefix="/api/orders",
@@ -106,26 +106,34 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
 # ==========================================
 # LIST ORDERS
 # ==========================================
-@router.get("/", response_model=list[OrderResponse])
+@router.get("/", response_model=PaginatedResponse[OrderResponse])
 def get_orders(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
-    """Get list of orders with pagination and optional search"""
+    """Get list of orders with pagination, search, and total count"""
     query = db.query(Order)
-    
-    # Apply search filter if provided
+
     if search:
-        # Check if search is numeric (for order ID search)
         if search.isdigit():
             query = query.filter(Order.id == int(search))
         else:
-            # Search by customer name or last_name (join with Customer)
             search_filter = f"%{search}%"
             query = query.join(Customer).filter(
                 (Customer.name.ilike(search_filter)) |
                 (Customer.last_name.ilike(search_filter))
             )
-    
-    orders = query.offset(skip).limit(limit).all()
-    return orders
+
+    total = query.count()
+    items = query.offset(skip).limit(limit).all()
+
+    page = (skip // limit) + 1 if limit else 1
+    pages = (total + limit - 1) // limit if limit else 1
+
+    return PaginatedResponse[OrderResponse](
+        items=items,
+        total=total,
+        page=page,
+        size=limit,
+        pages=pages
+    )
 
 
 # ==========================================

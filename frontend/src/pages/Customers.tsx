@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { customerService } from '../services/customerService';
 import type { Customer } from '../types/customer';
 import Table from '../components/ui/Table';
@@ -9,7 +9,9 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import GenericForm from '../components/ui/GenericForm';
 import SearchBar from '../components/ui/SearchBar';
+import Pagination from '../components/ui/Pagination';
 import type { FormField } from '../components/ui/GenericForm';
+import type { PaginatedResponse } from '../types/pagination';
 
 type CustomerFormData = Omit<Customer, 'id' | 'created_at'>;
 
@@ -19,11 +21,22 @@ const Customers = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
+
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
+    setPage(1);
+  }, []);
 
   // ============== QUERY ==============
-  const { data: customers = [], isLoading, error, isError } = useQuery({
-    queryKey: ['customers', searchTerm],
-    queryFn: () => customerService.getCustomers(0, 50, searchTerm),
+  const { data, error, isError, isFetching } = useQuery<PaginatedResponse<Customer>>({
+    queryKey: ['customers', searchTerm, page, pageSize],
+    queryFn: () => {
+      const skip = (page - 1) * pageSize;
+      return customerService.getCustomers(skip, pageSize, searchTerm);
+    },
+    placeholderData: keepPreviousData,
   });
 
   const formatDate = (dateString: string) => {
@@ -87,24 +100,6 @@ const Customers = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="px-12 py-12">
-        <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Customers</h1>
-        <div className="text-center text-gray-600">Loading customers...</div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="px-12 py-12">
-        <h1 className="text-4xl font-serif font-bold text-pwc-black mb-8">Customers</h1>
-        <div className="text-center text-red-600">Error: {error instanceof Error ? error.message : 'Failed to load customers'}</div>
-      </div>
-    );
-  }
-
   return (
     <div className="px-12 py-12">
       {/* Header with Title and Button */}
@@ -119,18 +114,36 @@ const Customers = () => {
       <div className="mb-6">
         <SearchBar
           placeholder="Search customers by ID, name, or email..."
-          onSearch={setSearchTerm}
+          onSearch={handleSearch}
           initialValue={searchTerm}
         />
       </div>
 
-      {/* Table */}
-      <Table 
-        data={customers} 
-        columns={columns} 
-        emptyMessage="No customers found"
-        onRowClick={(customer) => navigate(`/customers/${customer.id}`)}
-      />
+      {isError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700">
+          Error: {error instanceof Error ? error.message : 'Failed to load customers'}
+        </div>
+      )}
+
+      {/* Table and Pagination Container */}
+      <div className="flex flex-col justify-between min-h-[600px]">
+        {/* Table */}
+        <div className={isFetching ? 'opacity-50 transition-opacity' : ''}>
+          <Table 
+            data={data?.items ?? []} 
+            columns={columns} 
+            emptyMessage="No customers found"
+            onRowClick={(customer) => navigate(`/customers/${customer.id}`)}
+          />
+        </div>
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={page}
+          totalPages={data?.pages ?? 1}
+          onPageChange={setPage}
+        />
+      </div>
 
       {/* Modal */}
       <Modal
