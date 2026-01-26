@@ -115,6 +115,7 @@ def get_orders(skip: int = 0, limit: int = 10, search: str = None, db: Session =
         else:
             search_filter = f"%{search}%"
             query = query.join(Customer).filter(
+                (Customer.company_name.ilike(search_filter)) |
                 (Customer.name.ilike(search_filter)) |
                 (Customer.last_name.ilike(search_filter))
             )
