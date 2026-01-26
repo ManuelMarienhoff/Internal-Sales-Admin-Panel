@@ -29,7 +29,7 @@ def _to_float(value: Decimal | None) -> float:
 @router.get("/stats")
 def get_dashboard_stats(
     month: int | None = None,
-    year: int = datetime.utcnow().year,
+    year: int = 2026,
     db: Session = Depends(get_db)
 ):
     """
@@ -128,17 +128,19 @@ def get_dashboard_stats(
     # C. SERVICE LINE METRICS (FILTERED)
     # ======================
     # Revenue by service line: Sum of unit_price from order items
+    # Must join through Order to apply month filter on Order.created_at
     revenue_by_service_line_query = (
         db.query(
             Product.service_line.label("name"),
             func.coalesce(func.sum(OrderItem.unit_price), 0).label("value"),
         )
         .join(OrderItem, OrderItem.product_id == Product.id)
-        .filter(extract("year", OrderItem.created_at) == year)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(extract("year", Order.created_at) == year)
     )
     if month is not None:
         revenue_by_service_line_query = revenue_by_service_line_query.filter(
-            extract("month", OrderItem.created_at) == month
+            extract("month", Order.created_at) == month
         )
     
     revenue_by_service_line_rows = revenue_by_service_line_query.group_by(Product.service_line).all()
@@ -154,11 +156,12 @@ def get_dashboard_stats(
             func.count(OrderItem.id).label("value"),
         )
         .join(OrderItem, OrderItem.product_id == Product.id)
-        .filter(extract("year", OrderItem.created_at) == year)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(extract("year", Order.created_at) == year)
     )
     if month is not None:
         share_by_service_line_query = share_by_service_line_query.filter(
-            extract("month", OrderItem.created_at) == month
+            extract("month", Order.created_at) == month
         )
     
     share_by_service_line_rows = share_by_service_line_query.group_by(Product.service_line).all()
@@ -179,16 +182,18 @@ def get_dashboard_stats(
     
     # Query order items for selected year, grouped by month and service line
     # IMPORTANT: Only filter by year, NOT by month (always show Jan-Dec)
+    # Filter by Order.created_at for consistency
     annual_data = (
         db.query(
-            extract("month", OrderItem.created_at).label("month"),
+            extract("month", Order.created_at).label("month"),
             Product.service_line.label("service_line"),
             func.coalesce(func.sum(OrderItem.unit_price), 0).label("value"),
         )
-        .join(Product, Product.id == OrderItem.product_id)
-        .filter(extract("year", OrderItem.created_at) == year)
+        .join(OrderItem, OrderItem.product_id == Product.id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(extract("year", Order.created_at) == year)
         .group_by(
-            extract("month", OrderItem.created_at),
+            extract("month", Order.created_at),
             Product.service_line,
         )
         .all()
