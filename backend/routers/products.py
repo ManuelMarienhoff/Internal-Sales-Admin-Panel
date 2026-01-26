@@ -167,7 +167,7 @@ def update_product(product_id: int, product_update: ProductUpdate, db: Session =
         )
     
     # Check if we're deactivating the product (is_active: True -> False)
-    update_data = product_update.dict(exclude_unset=True)
+    update_data = product_update.model_dump(exclude_unset=True)
     is_deactivating = (
         'is_active' in update_data 
         and update_data['is_active'] is False 

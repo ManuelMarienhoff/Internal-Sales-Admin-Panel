@@ -18,7 +18,7 @@ router = APIRouter(
 @router.post("/", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
 def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
     # --- DEBUG PRINT ---
-    print(f"👀 RECIBIDO EN BACKEND: {customer.dict()}")
+    print(f"👀 RECIBIDO EN BACKEND: {customer.model_dump()}")
     """Create a new customer"""
     # Check if email already exists
     existing_customer = db.query(Customer).filter(Customer.email == customer.email).first()
@@ -115,7 +115,7 @@ def update_customer(customer_id: int, customer_update: CustomerUpdate, db: Sessi
             )
     
     # Update only provided fields
-    update_data = customer_update.dict(exclude_unset=True)
+    update_data = customer_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_customer, field, value)
     

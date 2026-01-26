@@ -1,5 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
-from pydantic.generics import GenericModel
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
 from typing import List, Optional, Generic, TypeVar
 from decimal import Decimal
@@ -9,13 +8,14 @@ from decimal import Decimal
 T = TypeVar("T")
 
 
-class PaginatedResponse(GenericModel, Generic[T]):
+class PaginatedResponse(BaseModel, Generic[T]):
     """Generic paginated response wrapper"""
     items: List[T]
     total: int
     page: int
     size: int
     pages: int
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 # ============== CUSTOMER SCHEMAS ==============
@@ -50,9 +50,7 @@ class CustomerResponse(BaseModel):
     email: str
     created_at: datetime
     
-    class Config:
-        # Config: Allows Pydantic to read data from ORM (SQLAlchemy) objects
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CustomerBase(BaseModel):
@@ -63,8 +61,7 @@ class CustomerBase(BaseModel):
     last_name: str
     email: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CustomerWithOrders(CustomerResponse):
@@ -103,8 +100,7 @@ class ProductResponse(BaseModel):
     is_active: bool
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============== ORDER ITEM SCHEMAS ==============
@@ -123,8 +119,7 @@ class OrderItemResponse(BaseModel):
     created_at: datetime
     product: ProductResponse  
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============== ORDER SCHEMAS ==============
@@ -132,7 +127,7 @@ class OrderCreate(BaseModel):
     """Schema for creating an order"""
     customer_id: int = Field(..., gt=0)
     # Validation: List must contain at least 1 item (cannot create empty order)
-    items: List[OrderItemCreate] = Field(..., min_items=1)
+    items: List[OrderItemCreate] = Field(..., min_length=1)
 
 
 class OrderUpdate(BaseModel):
@@ -152,8 +147,7 @@ class OrderResponse(BaseModel):
     total_amount: Decimal
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OrderWithDetails(OrderResponse):
