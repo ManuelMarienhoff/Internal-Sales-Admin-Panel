@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 import models  # Import models to register all classes
-from routers import products, customers, orders
+from routers import products, customers, orders, dashboard
 
 # Create all tables upon application startup
 Base.metadata.create_all(bind=engine)
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(products.router)
 app.include_router(customers.router)
 app.include_router(orders.router)
+app.include_router(dashboard.router)
 
 @app.get("/health")
 def health_check():
