@@ -24,18 +24,53 @@ const currencyFmt = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
+// ============== COLOR PALETTE ==============
+// Service Line Colors (Fixed mapping)
+const SERVICE_LINE_COLORS: Record<string, string> = {
+  'Audit': '#0047AB',           // Deep Corporate Blue
+  'Tax': '#16A34A',             // Financial Green
+  'Consulting': '#EAB308',      // Consulting Gold/Yellow
+};
+
+// Industry Colors (Consistent across charts)
+const INDUSTRY_COLORS: Record<string, string> = {
+  'Technology': '#8B5CF6',      // Violet
+  'Finance': '#0EA5E9',         // Cyan
+  'Energy': '#F97316',          // Orange
+  'Retail': '#EC4899',          // Magenta/Pink
+  'Manufacturing': '#64748B',   // Slate Gray
+  'Automotive': '#14B8A6',      // Teal
+};
+
+const getServiceLineColor = (serviceLine: string): string => {
+  return SERVICE_LINE_COLORS[serviceLine] || '#D04A02'; // PwC Orange fallback
+};
+
+const getIndustryColor = (industry: string): string => {
+  return INDUSTRY_COLORS[industry] || '#94A3B8'; // Light gray fallback
+};
+
+// Custom Tooltip Component
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 rounded-lg shadow-lg border border-pwc-gray/20">
+        <p className="text-sm font-semibold text-pwc-black">{label || payload[0].name}</p>
+        {payload.map((entry: any, idx: number) => (
+          <p key={idx} className="text-sm" style={{ color: entry.color || entry.stroke }}>
+            {entry.name}: {typeof entry.value === 'number' && entry.value > 100 ? currencyFmt.format(entry.value) : entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 const CARD_BASE = 'bg-white shadow-md rounded-lg p-6 border border-pwc-gray/30';
 const TITLE_BASE = 'text-4xl font-serif font-bold text-pwc-black mb-10';
-
-const pwcPalette = [
-  '#fd5108', // pwc orange
-  '#2D2D2D', // pwc black
-  '#E0E0E0', // pwc gray
-  '#ff8547',
-  '#4a4a4a',
-  '#c9c9c9',
-  '#ff6b2e',
-];
+const AXIS_LABEL_COLOR = '#4B5563';
+const GRID_COLOR = '#E5E7EB';
 
 const Dashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
@@ -170,15 +205,18 @@ const Dashboard = () => {
           <div className="h-80">
             <ResponsiveContainer>
               <BarChart data={data.revenue_by_industry} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis dataKey="name" tick={{ fill: '#2D2D2D', fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
+                <XAxis dataKey="name" tick={{ fill: AXIS_LABEL_COLOR, fontSize: 12 }} />
                 <YAxis
-                  tick={{ fill: '#2D2D2D', fontSize: 12 }}
+                  tick={{ fill: AXIS_LABEL_COLOR, fontSize: 12 }}
                   tickFormatter={(v) => currencyFmt.format(Number(v) || 0)}
                 />
-                <ReTooltip formatter={(value: any, name: any) => [currencyFmt.format(Number(value) || 0), name]} />
-                <Legend />
-                <Bar dataKey="value" name="Revenue" fill="#fd5108" />
+                <ReTooltip content={<CustomTooltip />} />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                  {data.revenue_by_industry.map((entry, index) => (
+                    <Cell key={`industry-bar-${index}`} fill={getIndustryColor(entry.name)} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -202,11 +240,11 @@ const Dashboard = () => {
                   labelLine={false}
                 >
                   {data.share_by_industry.map((_, index) => (
-                    <Cell key={`industry-${index}`} fill={pwcPalette[index % pwcPalette.length]} />
+                    <Cell key={`industry-pie-${index}`} fill={getIndustryColor(data.share_by_industry[index].name)} />
                   ))}
                 </Pie>
                 <Legend />
-                <ReTooltip />
+                <ReTooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -221,15 +259,18 @@ const Dashboard = () => {
           <div className="h-80">
             <ResponsiveContainer>
               <BarChart data={data.revenue_by_service_line} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis dataKey="name" tick={{ fill: '#2D2D2D', fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
+                <XAxis dataKey="name" tick={{ fill: AXIS_LABEL_COLOR, fontSize: 12 }} />
                 <YAxis
-                  tick={{ fill: '#2D2D2D', fontSize: 12 }}
+                  tick={{ fill: AXIS_LABEL_COLOR, fontSize: 12 }}
                   tickFormatter={(v) => currencyFmt.format(Number(v) || 0)}
                 />
-                <ReTooltip formatter={(value: any, name: any) => [currencyFmt.format(Number(value) || 0), name]} />
-                <Legend />
-                <Bar dataKey="value" name="Revenue" fill="#2D2D2D" />
+                <ReTooltip content={<CustomTooltip />} />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                  {data.revenue_by_service_line.map((entry, index) => (
+                    <Cell key={`service-bar-${index}`} fill={getServiceLineColor(entry.name)} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -253,11 +294,11 @@ const Dashboard = () => {
                   labelLine={false}
                 >
                   {data.share_by_service_line.map((_, index) => (
-                    <Cell key={`service-${index}`} fill={pwcPalette[index % pwcPalette.length]} />
+                    <Cell key={`service-pie-${index}`} fill={getServiceLineColor(data.share_by_service_line[index].name)} />
                   ))}
                 </Pie>
                 <Legend />
-                <ReTooltip />
+                <ReTooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -273,27 +314,30 @@ const Dashboard = () => {
           <ResponsiveContainer>
             <AreaChart data={data.annual_trends} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
               <defs>
-                {serviceLines.map((sl, idx) => (
-                  <linearGradient id={`gradient-${sl}`} key={sl} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={pwcPalette[idx % pwcPalette.length]} stopOpacity={0.8} />
-                    <stop offset="95%" stopColor={pwcPalette[idx % pwcPalette.length]} stopOpacity={0.1} />
-                  </linearGradient>
-                ))}
+                {serviceLines.map((sl) => {
+                  const color = getServiceLineColor(sl);
+                  return (
+                    <linearGradient id={`gradient-${sl}`} key={sl} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={color} stopOpacity={0.8} />
+                      <stop offset="95%" stopColor={color} stopOpacity={0.1} />
+                    </linearGradient>
+                  );
+                })}
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-              <XAxis dataKey="month" tick={{ fill: '#2D2D2D', fontSize: 12 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
+              <XAxis dataKey="month" tick={{ fill: AXIS_LABEL_COLOR, fontSize: 12 }} />
               <YAxis
-                tick={{ fill: '#2D2D2D', fontSize: 12 }}
+                tick={{ fill: AXIS_LABEL_COLOR, fontSize: 12 }}
                 tickFormatter={(v) => currencyFmt.format(Number(v) || 0)}
               />
-              <ReTooltip formatter={(value: any, name: any) => [currencyFmt.format(Number(value) || 0), name]} />
+              <ReTooltip content={<CustomTooltip />} />
               <Legend />
-              {serviceLines.map((sl, idx) => (
+              {serviceLines.map((sl) => (
                 <Area
                   key={sl}
                   type="monotone"
                   dataKey={sl}
-                  stroke={pwcPalette[idx % pwcPalette.length]}
+                  stroke={getServiceLineColor(sl)}
                   fill={`url(#gradient-${sl})`}
                   name={sl}
                   strokeWidth={2}
