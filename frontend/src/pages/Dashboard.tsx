@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ResponsiveContainer,
@@ -38,9 +38,11 @@ const pwcPalette = [
 ];
 
 const Dashboard = () => {
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['dashboard', 'stats'],
-    queryFn: getDashboardStats,
+    queryKey: ['dashboard', 'stats', selectedMonth],
+    queryFn: () => getDashboardStats(selectedMonth === 0 ? undefined : selectedMonth),
     staleTime: 60_000,
   });
 
@@ -88,8 +90,36 @@ const Dashboard = () => {
 
   return (
     <div className="px-12 py-12">
-      {/* Title */}
-      <h1 className={TITLE_BASE}>Global Sales Insights</h1>
+      {/* Header with Title and Month Selector */}
+      <div className="flex items-center justify-between mb-10">
+        <h1 className={TITLE_BASE}>Global Sales Insights</h1>
+        
+        <div className="flex items-center gap-3">
+          <label htmlFor="month-select" className="text-sm font-semibold text-pwc-black">
+            Filter by Month:
+          </label>
+          <select
+            id="month-select"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="px-4 py-2 border border-pwc-gray rounded-lg bg-white text-pwc-black font-medium shadow-sm hover:border-pwc-orange focus:outline-none focus:ring-2 focus:ring-pwc-orange focus:border-transparent transition-colors"
+          >
+            <option value={0}>All Year</option>
+            <option value={1}>January</option>
+            <option value={2}>February</option>
+            <option value={3}>March</option>
+            <option value={4}>April</option>
+            <option value={5}>May</option>
+            <option value={6}>June</option>
+            <option value={7}>July</option>
+            <option value={8}>August</option>
+            <option value={9}>September</option>
+            <option value={10}>October</option>
+            <option value={11}>November</option>
+            <option value={12}>December</option>
+          </select>
+        </div>
+      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

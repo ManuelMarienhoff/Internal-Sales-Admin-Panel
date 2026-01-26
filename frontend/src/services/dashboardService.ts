@@ -25,7 +25,8 @@ export interface DashboardStats {
   annual_trends: AnnualTrendEntry[];
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
-  const { data } = await axiosInstance.get<DashboardStats>('/dashboard/stats');
+export async function getDashboardStats(month?: number): Promise<DashboardStats> {
+  const params = month ? { month } : {};
+  const { data } = await axiosInstance.get<DashboardStats>('/dashboard/stats', { params });
   return data;
 }
