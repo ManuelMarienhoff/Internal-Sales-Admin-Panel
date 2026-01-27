@@ -129,7 +129,7 @@ const Orders = () => {
       {/* Search Bar */}
       <div className="mb-6">
         <SearchBar
-          placeholder="Search engagements by ID or customer name..."
+          placeholder="Search engagements by ID or client name..."
           onSearch={handleSearch}
           initialValue={searchTerm}
         />

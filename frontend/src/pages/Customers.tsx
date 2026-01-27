@@ -131,7 +131,7 @@ const Customers = () => {
     <div className="h-full flex flex-col px-12 py-12">
       {/* Header with Title and Button */}
       <div className="flex justify-between items-center mb-8 flex-shrink-0">
-        <h1 className="text-4xl font-serif font-bold text-pwc-black">Customers</h1>
+        <h1 className="text-4xl font-serif font-bold text-pwc-black">Clients</h1>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           New Customer
         </Button>
@@ -140,7 +140,7 @@ const Customers = () => {
       {/* Search Bar */}
       <div className="mb-6 flex-shrink-0">
         <SearchBar
-          placeholder="Search customers by ID, name, or email..."
+          placeholder="Search clients by ID, name, or email..."
           onSearch={handleSearch}
           initialValue={searchTerm}
         />
