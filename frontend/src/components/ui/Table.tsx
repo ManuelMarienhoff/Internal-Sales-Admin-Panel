@@ -13,6 +13,7 @@ interface TableProps<T> {
   columns: ColumnDef<T>[];
   emptyMessage?: string;
   onRowClick?: (row: T) => void;
+  rowsPerPage?: number;
 }
 
 const Table = <T extends { id?: number }>({
@@ -20,6 +21,7 @@ const Table = <T extends { id?: number }>({
   columns,
   emptyMessage = 'No data found',
   onRowClick,
+  rowsPerPage,
 }: TableProps<T>) => {
   if (data.length === 0) {
     return (
@@ -28,6 +30,8 @@ const Table = <T extends { id?: number }>({
       </div>
     );
   }
+
+  const spacerRows = rowsPerPage ? Math.max(rowsPerPage - data.length, 0) : 0;
 
   return (
     <div className="h-full overflow-y-auto overflow-x-auto border border-gray-300">
@@ -53,10 +57,10 @@ const Table = <T extends { id?: number }>({
           {data.map((row, rowIndex) => (
             <tr
               key={row.id || rowIndex}
-              className={`${
-                rowIndex % 2 === 0 ? 'bg-white' : 'bg-orange-50'
-              } border-b border-gray-300 hover:bg-orange-100 transition-colors ${
-                onRowClick ? 'cursor-pointer' : ''
+              className={`$
+                {rowIndex % 2 === 0 ? 'bg-white' : 'bg-orange-50'}
+              } border-b border-gray-300 hover:bg-orange-100 transition-colors $
+                {onRowClick ? 'cursor-pointer' : ''
               }`}
               onClick={() => onRowClick?.(row)}
             >
@@ -81,6 +85,19 @@ const Table = <T extends { id?: number }>({
               ))}
             </tr>
           ))}
+
+          {spacerRows > 0 &&
+            Array.from({ length: spacerRows }).map((_, idx) => (
+              <tr
+                key={`spacer-${idx}`}
+                className="bg-transparent border-b border-transparent pointer-events-none select-none"
+                aria-hidden="true"
+              >
+                <td colSpan={columns.length} className="px-6 py-4 opacity-0">
+                  &nbsp;
+                </td>
+              </tr>
+            ))}
         </tbody>
       </table>
     </div>

@@ -205,26 +205,23 @@ const Products = () => {
         </div>
       )}
 
-      {/* Table and Pagination Container - flex-1 para ocupar espacio restante */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Table - flex-1 para crecer y permitir scroll interno */}
-        <div className={`flex-1 min-h-0 ${isFetching ? 'opacity-50 transition-opacity' : ''}`}>
-          <Table 
-            data={sortedProducts} 
-            columns={columns} 
-            emptyMessage="No products found"
-            onRowClick={(product) => navigate(`/products/${product.id}`)}
-          />
-        </div>
+      {/* Table and Pagination */}
+      <div className={isFetching ? 'opacity-50 transition-opacity' : ''}>
+        <Table 
+          data={sortedProducts} 
+          columns={columns} 
+          emptyMessage="No products found"
+          onRowClick={(product) => navigate(`/products/${product.id}`)}
+          rowsPerPage={pageSize}
+        />
+      </div>
 
-        {/* Pagination - sticky footer */}
-        <div className="flex-shrink-0">
-          <Pagination
-            currentPage={page}
-            totalPages={data?.pages ?? 1}
-            onPageChange={setPage}
-          />
-        </div>
+      <div>
+        <Pagination
+          currentPage={page}
+          totalPages={data?.pages ?? 1}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Modal */}

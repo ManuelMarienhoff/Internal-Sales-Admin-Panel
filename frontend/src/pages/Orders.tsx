@@ -17,7 +17,7 @@ const Orders = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
-  const pageSize = 6;
+  const pageSize = 7;
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
@@ -141,26 +141,23 @@ const Orders = () => {
         </div>
       )}
 
-      {/* Table and Pagination Container - sticky footer with internal scroll */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Table - grows and scrolls internally */}
-        <div className={`flex-1 min-h-0 ${isFetching ? 'opacity-50 transition-opacity' : ''}`}>
-          <Table 
-            data={data?.items ?? []} 
-            columns={columns} 
-            emptyMessage="No engagements found"
-            onRowClick={(order) => navigate(`/orders/${order.id}`)}
-          />
-        </div>
+      {/* Table and Pagination */}
+      <div className={isFetching ? 'opacity-50 transition-opacity' : ''}>
+        <Table 
+          data={data?.items ?? []} 
+          columns={columns} 
+          emptyMessage="No engagements found"
+          onRowClick={(order) => navigate(`/orders/${order.id}`)}
+          rowsPerPage={pageSize}
+        />
+      </div>
 
-        {/* Pagination - fixed at bottom of the container */}
-        <div className="flex-shrink-0">
-          <Pagination
-            currentPage={page}
-            totalPages={data?.pages ?? 1}
-            onPageChange={setPage}
-          />
-        </div>
+      <div>
+        <Pagination
+          currentPage={page}
+          totalPages={data?.pages ?? 1}
+          onPageChange={setPage}
+        />
       </div>
 
       {/* Create Order Modal */}
