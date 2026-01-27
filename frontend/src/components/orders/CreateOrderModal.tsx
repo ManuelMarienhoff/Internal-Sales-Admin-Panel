@@ -259,7 +259,7 @@ const CreateOrderModal = ({
             {/* STEP 3: SUMMARY TABLE (No Quantity) */}
             <div>
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">
-                Step 3: Engagement Scope
+                Step 3: Selected Services
               </h3>
               
               {cart.length === 0 ? (

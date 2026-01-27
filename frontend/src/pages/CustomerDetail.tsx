@@ -60,6 +60,14 @@ const CustomerDetail = () => {
     return `${day}/${month}/${year}`;
   };
 
+  const renderIndustryBadge = (industry: string) => {
+    return (
+      <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-700">
+        {industry}
+      </span>
+    );
+  };
+
   const editFormFields: FormField[] = [
     { name: 'name', label: 'First Name', type: 'text', placeholder: 'Enter first name' },
     { name: 'last_name', label: 'Last Name', type: 'text', placeholder: 'Enter last name' },
@@ -79,7 +87,7 @@ const CustomerDetail = () => {
   return (
     <>
       <DetailLayout
-        title={customer ? `${customer.name} ${customer.last_name}` : 'Customer Details'}
+        title={customer ? customer.company_name : 'Customer Details'}
         backRoute="/customers"
       isLoading={isLoading}
       error={isError ? error : null}
@@ -109,6 +117,16 @@ const CustomerDetail = () => {
         <div>
           {/* Description List - 2 Columns */}
           <dl className="grid grid-cols-2 gap-8">
+            {/* Company Name */}
+            <div className="col-span-2">
+              <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                Company Name
+              </dt>
+              <dd className="text-xl font-semibold text-pwc-black">
+                {customer.company_name}
+              </dd>
+            </div>
+
             {/* First Name */}
             <div>
               <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
@@ -130,12 +148,22 @@ const CustomerDetail = () => {
             </div>
 
             {/* Email */}
-            <div className="col-span-2">
+            <div>
               <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
                 Email Address
               </dt>
               <dd className="text-base text-blue-600 hover:underline cursor-pointer">
                 <a href={`mailto:${customer.email}`}>{customer.email}</a>
+              </dd>
+            </div>
+
+            {/* Industry */}
+            <div>
+              <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                Industry
+              </dt>
+              <dd>
+                {renderIndustryBadge(customer.industry)}
               </dd>
             </div>
 
@@ -192,21 +220,26 @@ const CustomerDetail = () => {
           </div>
 
           {/* Orders Section (if available) */}
-          {customer && 'orders' in customer && (customer as CustomerWithOrders).orders?.length > 0 && (
-            <div className="mt-12 pt-8 border-t border-gray-200">
-              <h3 className="text-lg font-bold text-pwc-black mb-6 uppercase tracking-wide">
-                Recent Orders
-              </h3>
+          {customer && 'orders' in customer && (customer as CustomerWithOrders).orders?.length > 0 && (() => {
+            const sortedOrders = [...(customer as CustomerWithOrders).orders].sort(
+              (a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime()
+            );
+            
+            return (
+              <div className="mt-12 pt-8 border-t border-gray-200">
+                <h3 className="text-lg font-bold text-pwc-black mb-6 uppercase tracking-wide">
+                  Recent Engagements
+                </h3>
 
-              <div className="grid grid-cols-1 gap-4">
-                {(customer as CustomerWithOrders).orders.map((order) => (
+                <div className="grid grid-cols-1 gap-4">
+                  {sortedOrders.map((order) => (
                   <button
                     key={order.id}
                     onClick={() => navigate(`/orders/${order.id}`, { state: { from: location } })}
                     className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-none hover:bg-orange-50 transition cursor-pointer text-left"
                   >
                     <div>
-                      <p className="font-semibold text-pwc-black">Order #{order.id}</p>
+                      <p className="font-semibold text-pwc-black">Engagement #{order.id}</p>
                       <p className="text-sm text-gray-600">
                         Status: <span className="font-medium">{order.status}</span>
                       </p>
@@ -220,7 +253,8 @@ const CustomerDetail = () => {
                 ))}
               </div>
             </div>
-          )}
+            );
+          })()}
         </div>
       )}
     </DetailLayout>

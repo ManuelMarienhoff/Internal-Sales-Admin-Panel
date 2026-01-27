@@ -120,16 +120,16 @@ const Orders = () => {
     <div className="px-12 py-12">
       {/* Header with Title and Button */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-serif font-bold text-pwc-black">Orders</h1>
+        <h1 className="text-4xl font-serif font-bold text-pwc-black">Engagements</h1>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-          + New Order
+          New Engagement
         </Button>
       </div>
 
       {/* Search Bar */}
       <div className="mb-6">
         <SearchBar
-          placeholder="Search orders by ID or customer name..."
+          placeholder="Search engagements by ID or customer name..."
           onSearch={handleSearch}
           initialValue={searchTerm}
         />
@@ -137,7 +137,7 @@ const Orders = () => {
 
       {isError && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700">
-          Error: {error instanceof Error ? error.message : 'Failed to load orders'}
+          Error: {error instanceof Error ? error.message : 'Failed to load engagements'}
         </div>
       )}
 
@@ -148,7 +148,7 @@ const Orders = () => {
           <Table 
             data={data?.items ?? []} 
             columns={columns} 
-            emptyMessage="No orders found"
+            emptyMessage="No engagements found"
             onRowClick={(order) => navigate(`/orders/${order.id}`)}
           />
         </div>

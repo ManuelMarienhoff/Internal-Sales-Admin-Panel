@@ -161,7 +161,7 @@ const OrderDetail = () => {
 
   return (
     <DetailLayout
-      title={order ? `Order #${order.id}` : 'Order Details'}
+      title={order ? `Engagement #${order.id}` : 'Engagement Details'}
       backRoute="/orders"
       isLoading={isLoading}
       error={isError ? error : null}
@@ -251,8 +251,18 @@ const OrderDetail = () => {
                   onClick={() => navigate(`/customers/${order.customer?.id}`, { state: { from: location } })}
                   className="text-pwc-black hover:text-pwc-orange transition cursor-pointer underline"
                 >
-                  {order.customer?.name} {order.customer?.last_name}
+                  {order.customer?.company_name}
                 </button>
+              </dd>
+            </div>
+
+            {/* Contact Person */}
+            <div>
+              <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                Contact Person
+              </dt>
+              <dd className="text-base text-gray-700">
+                {order.customer?.name} {order.customer?.last_name}
               </dd>
             </div>
 
@@ -268,10 +278,10 @@ const OrderDetail = () => {
               </dd>
             </div>
 
-            {/* Order Total */}
+            {/* Engagement Total */}
             <div>
               <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
-                Order Total
+                Engagement Total
               </dt>
               <dd className="text-2xl font-bold text-pwc-orange">
                 {formatPrice(order.total_amount)}
@@ -295,7 +305,7 @@ const OrderDetail = () => {
           {/* Order Items Table */}
           <div>
             <h3 className="text-lg font-bold text-pwc-black mb-6 uppercase tracking-wide">
-              Engagements ({order.items?.length || 0})
+              Included Services ({order.items?.length || 0})
             </h3>
 
             {order.items && order.items.length > 0 ? (
@@ -320,7 +330,7 @@ const OrderDetail = () => {
             <div className="grid grid-cols-2 gap-6">
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-none">
                 <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
-                  Engagements Count
+                  Services Count
                 </p>
                 <p className="text-2xl font-bold text-pwc-black">
                   {order.items?.length || 0}
@@ -361,7 +371,7 @@ const OrderDetail = () => {
       <Modal
         isOpen={isDeleteConfirmOpen}
         onClose={() => setIsDeleteConfirmOpen(false)}
-        title="Delete Order"
+        title="Delete Engagement"
       >
         <div className="space-y-6">
           {deleteError && (
@@ -375,7 +385,7 @@ const OrderDetail = () => {
             </div>
           )}
           <p className="text-gray-700">
-            Are you sure you want to delete Order <span className="font-bold">#{order?.id}</span>? This action cannot be undone.
+            Are you sure you want to delete Engagement <span className="font-bold">#{order?.id}</span>? This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3">
             <Button
@@ -391,7 +401,7 @@ const OrderDetail = () => {
               disabled={deleteMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
             >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete Order'}
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete Engagement'}
             </Button>
           </div>
         </div>

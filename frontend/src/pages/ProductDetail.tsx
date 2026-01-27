@@ -93,8 +93,32 @@ const ProductDetail = () => {
     return `${day}/${month}/${year}`;
   };
 
+  const renderServiceLineBadge = (serviceLine: string) => {
+    const palette: Record<string, string> = {
+      Audit: 'bg-blue-100 text-blue-800',
+      Tax: 'bg-green-100 text-green-800',
+      Consulting: 'bg-orange-100 text-orange-800',
+    };
+    const colors = palette[serviceLine] || 'bg-gray-100 text-gray-800';
+    return (
+      <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${colors}`}>
+        {serviceLine}
+      </span>
+    );
+  };
+
   const editFormFields: FormField[] = [
     { name: 'name', label: 'Product Name', type: 'text', placeholder: 'Enter product name' },
+    {
+      name: 'service_line',
+      label: 'Service Line',
+      type: 'select',
+      options: [
+        { value: 'Audit', label: 'Audit' },
+        { value: 'Tax', label: 'Tax' },
+        { value: 'Consulting', label: 'Consulting' },
+      ],
+    },
     { name: 'price', label: 'Price', type: 'number', placeholder: 'Enter price' },
     { name: 'description', label: 'Description', type: 'textarea', placeholder: 'Enter description' },
     {
@@ -183,6 +207,26 @@ const ProductDetail = () => {
               </dd>
             </div>
 
+            {/* Service Line */}
+            <div>
+              <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                Service Line
+              </dt>
+              <dd>
+                {renderServiceLineBadge(product.service_line)}
+              </dd>
+            </div>
+
+            {/* Created At */}
+            <div>
+              <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+                Created At
+              </dt>
+              <dd className="text-base text-gray-600">
+                {formatDate(product.created_at)}
+              </dd>
+            </div>
+
             {/* Description */}
             <div className="col-span-2">
               <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
@@ -210,16 +254,6 @@ const ProductDetail = () => {
                     Inactive
                   </span>
                 )}
-              </dd>
-            </div>
-
-            {/* Created At */}
-            <div>
-              <dt className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
-                Created At
-              </dt>
-              <dd className="text-base text-gray-600">
-                {formatDate(product.created_at)}
               </dd>
             </div>
           </dl>
@@ -257,6 +291,7 @@ const ProductDetail = () => {
             fields={editFormFields}
             initialValues={{
               name: product.name,
+              service_line: product.service_line,
               price: product.price,
               description: product.description,
               is_active: product.is_active,
