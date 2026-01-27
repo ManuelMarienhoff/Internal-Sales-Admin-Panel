@@ -105,8 +105,8 @@ def create_order(order: OrderCreate, db: Session = Depends(get_db)):
 # LIST ORDERS
 # ==========================================
 @router.get("/", response_model=PaginatedResponse[OrderResponse])
-def get_orders(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
-    """Get list of orders with pagination, search, and total count"""
+def get_orders(skip: int = 0, limit: int = 10, search: str = None, status: str = None, db: Session = Depends(get_db)):
+    """Get list of orders with pagination, search, status filter, and total count"""
     query = db.query(Order).options(joinedload(Order.customer))
 
     if search:
@@ -119,6 +119,9 @@ def get_orders(skip: int = 0, limit: int = 10, search: str = None, db: Session =
                 (Customer.name.ilike(search_filter)) |
                 (Customer.last_name.ilike(search_filter))
             )
+
+    if status:
+        query = query.filter(Order.status == status)
 
     total = query.count()
     items = query.offset(skip).limit(limit).all()

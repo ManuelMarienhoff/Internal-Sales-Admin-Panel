@@ -17,19 +17,26 @@ const Orders = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'confirmed' | 'completed'>('all');
   const pageSize = 7;
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
     setPage(1);
+    setStatusFilter('all');
+  }, []);
+
+  const handleStatusChange = useCallback((status: 'all' | 'draft' | 'confirmed' | 'completed') => {
+    setStatusFilter(status);
+    setPage(1);
   }, []);
 
   // ============== QUERY ==============
   const { data, error, isError, isFetching } = useQuery<PaginatedResponse<Order>>({
-    queryKey: ['orders', searchTerm, page, pageSize],
+    queryKey: ['orders', searchTerm, page, pageSize, statusFilter],
     queryFn: () => {
       const skip = (page - 1) * pageSize;
-      return orderService.getOrders(skip, pageSize, searchTerm);
+      return orderService.getOrders(skip, pageSize, searchTerm, statusFilter);
     },
     placeholderData: keepPreviousData,
   });
@@ -94,14 +101,14 @@ const Orders = () => {
         </div>
       ),
     },
-    {
+    ...(statusFilter === 'all' ? [{
       header: 'Status',
-      render: (order) => (
+      render: (order: Order) => (
         <span className={`px-3 py-1 rounded-none font-medium text-sm ${getStatusColor(order.status)}`}>
           {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
         </span>
       ),
-    },
+    }] : []),
     {
       header: 'Total',
       render: (order) => (
@@ -133,6 +140,46 @@ const Orders = () => {
           onSearch={handleSearch}
           initialValue={searchTerm}
         />
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-4 mb-6 border-b border-gray-200 flex-shrink-0">
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium transition-colors ${
+            statusFilter === 'all' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleStatusChange('all')}
+        >
+          All Engagements
+        </button>
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium transition-colors ${
+            statusFilter === 'draft' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleStatusChange('draft')}
+        >
+          Drafts
+        </button>
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium transition-colors ${
+            statusFilter === 'confirmed' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleStatusChange('confirmed')}
+        >
+          Confirmed
+        </button>
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium transition-colors ${
+            statusFilter === 'completed' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleStatusChange('completed')}
+        >
+          Completed
+        </button>
       </div>
 
       {isError && (

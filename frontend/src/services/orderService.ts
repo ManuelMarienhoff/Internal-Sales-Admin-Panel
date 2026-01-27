@@ -4,13 +4,14 @@ import type { PaginatedResponse } from '../types/pagination';
 
 export const orderService = {
   // ============== READ OPERATIONS ==============
-  getOrders: async (skip: number = 0, limit: number = 10, search?: string): Promise<PaginatedResponse<Order>> => {
+  getOrders: async (skip: number = 0, limit: number = 10, search?: string, status?: string): Promise<PaginatedResponse<Order>> => {
     try {
       const response = await axiosInstance.get<PaginatedResponse<Order>>('/orders', {
         params: {
           skip,
           limit,
           ...(search && { search }),
+          ...(status && status !== 'all' && { status }),
         },
       });
       return response.data;
