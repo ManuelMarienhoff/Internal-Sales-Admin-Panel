@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
@@ -10,18 +12,24 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="Internal Sales Management API")
 
 # ============== CORS CONFIGURATION ==============
-# Allow requests from standard frontend development ports
+# Parse comma-separated origins from environment; default to wildcard or localhost fallback
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
 allowed_origins = [
-    "http://localhost:3000",      # React default port
-    "http://localhost:5173",      # Vite default port
-    "http://127.0.0.1:3000",      # React (localhost alias)
-    "http://127.0.0.1:5173",      # Vite (localhost alias)
+    origin.strip()
+    for origin in (allowed_origins_env.split(",") if allowed_origins_env else [])
+    if origin.strip()
 ]
+
+if not allowed_origins:
+    # Wildcard avoids boot errors when env is missing; adjust credentials accordingly below
+    allowed_origins = ["*"]
+
+allow_credentials = "*" not in allowed_origins
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, PATCH, etc.)
     allow_headers=["*"],  # Allow all headers
 )
