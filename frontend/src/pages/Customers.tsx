@@ -22,19 +22,26 @@ const Customers = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
+  const [industryFilter, setIndustryFilter] = useState('all');
   const pageSize = 9;
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
     setPage(1);
+    setIndustryFilter('all');
+  }, []);
+
+  const handleIndustryChange = useCallback((industry: string) => {
+    setIndustryFilter(industry);
+    setPage(1);
   }, []);
 
   // ============== QUERY ==============
   const { data, error, isError, isFetching } = useQuery<PaginatedResponse<Customer>>({
-    queryKey: ['customers', searchTerm, page, pageSize],
+    queryKey: ['customers', searchTerm, page, pageSize, industryFilter],
     queryFn: () => {
       const skip = (page - 1) * pageSize;
-      return customerService.getCustomers(skip, pageSize, searchTerm);
+      return customerService.getCustomers(skip, pageSize, searchTerm, industryFilter);
     },
     placeholderData: keepPreviousData,
   });
@@ -49,14 +56,14 @@ const Customers = () => {
       header: 'Company',
       accessor: 'company_name',
     },
-    {
+    ...(industryFilter === 'all' ? [{
       header: 'Industry',
-      render: (customer) => (
+      render: (customer: Customer) => (
         <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
           {customer.industry}
         </span>
       ),
-    },
+    }] : []),
     {
       header: 'Contact',
       render: (customer) => `${customer.name} ${customer.last_name}`,
@@ -144,6 +151,73 @@ const Customers = () => {
           onSearch={handleSearch}
           initialValue={searchTerm}
         />
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-4 mb-6 border-b border-gray-200 flex-shrink-0 overflow-x-auto">
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium whitespace-nowrap transition-colors ${
+            industryFilter === 'all' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleIndustryChange('all')}
+        >
+          All Clients
+        </button>
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium whitespace-nowrap transition-colors ${
+            industryFilter === 'Technology' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleIndustryChange('Technology')}
+        >
+          Technology
+        </button>
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium whitespace-nowrap transition-colors ${
+            industryFilter === 'Finance' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleIndustryChange('Finance')}
+        >
+          Finance
+        </button>
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium whitespace-nowrap transition-colors ${
+            industryFilter === 'Retail' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleIndustryChange('Retail')}
+        >
+          Retail
+        </button>
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium whitespace-nowrap transition-colors ${
+            industryFilter === 'Healthcare' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleIndustryChange('Healthcare')}
+        >
+          Healthcare
+        </button>
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium whitespace-nowrap transition-colors ${
+            industryFilter === 'Energy' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleIndustryChange('Energy')}
+        >
+          Energy
+        </button>
+        <button
+          type="button"
+          className={`pb-2 text-sm font-medium whitespace-nowrap transition-colors ${
+            industryFilter === 'Manufacturing' ? 'text-pwc-black border-b-2 border-pwc-orange' : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => handleIndustryChange('Manufacturing')}
+        >
+          Manufacturing
+        </button>
       </div>
 
       {isError && (

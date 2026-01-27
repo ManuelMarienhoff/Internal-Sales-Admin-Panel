@@ -45,8 +45,8 @@ def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
 # LIST CUSTOMERS 
 # ==========================================
 @router.get("/", response_model=PaginatedResponse[CustomerResponse])
-def get_customers(skip: int = 0, limit: int = 10, search: str = None, db: Session = Depends(get_db)):
-    """Get list of customers with pagination, search, and total count"""
+def get_customers(skip: int = 0, limit: int = 10, search: str = None, industry: str = None, db: Session = Depends(get_db)):
+    """Get list of customers with pagination, search, industry filter, and total count"""
     query = db.query(Customer)
 
     if search:
@@ -61,6 +61,9 @@ def get_customers(skip: int = 0, limit: int = 10, search: str = None, db: Sessio
                 (Customer.last_name.ilike(search_filter)) |
                 (Customer.email.ilike(search_filter))
             )
+
+    if industry:
+        query = query.filter(Customer.industry == industry)
 
     total = query.count()
     items = query.offset(skip).limit(limit).all()
