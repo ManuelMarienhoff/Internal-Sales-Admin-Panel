@@ -23,20 +23,22 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [view, setView] = useState<'active' | 'inactive'>('active');
+  const [serviceLineFilter, setServiceLineFilter] = useState('all');
   const pageSize = 8;
 
   const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
     setPage(1);
+    setServiceLineFilter('all');
   }, []);
 
   // ============== QUERY ==============
   const { data, error, isError, isFetching } = useQuery<PaginatedResponse<Product>>({
-    queryKey: ['products', searchTerm, page, pageSize, view],
+    queryKey: ['products', searchTerm, page, pageSize, view, serviceLineFilter],
     queryFn: () => {
       const skip = (page - 1) * pageSize;
       const isActive = searchTerm ? undefined : view === 'active' ? true : false;
-      return productService.getProducts(skip, pageSize, searchTerm, isActive);
+      return productService.getProducts(skip, pageSize, searchTerm, isActive, serviceLineFilter);
     },
     placeholderData: keepPreviousData,
   });
@@ -160,13 +162,28 @@ const Products = () => {
         </Button>
       </div>
 
-      {/* Search Bar (global) */}
-      <div className="mb-6 flex-shrink-0">
-        <SearchBar
-          placeholder="Search services by ID or name..."
-          onSearch={handleSearch}
-          initialValue={searchTerm}
-        />
+      {/* Search Bar and Service Line Filter */}
+      <div className="mb-6 flex-shrink-0 flex gap-4 items-end">
+        <div className="flex-1">
+          <SearchBar
+            placeholder="Search services by ID or name..."
+            onSearch={handleSearch}
+            initialValue={searchTerm}
+          />
+        </div>
+        <select
+          value={serviceLineFilter}
+          onChange={(e) => {
+            setServiceLineFilter(e.target.value);
+            setPage(1);
+          }}
+          className="px-3 py-2 border border-gray-300 rounded-none bg-white text-gray-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-pwc-orange focus:border-transparent"
+        >
+          <option value="all">All Service Lines</option>
+          <option value="Audit">Audit</option>
+          <option value="Tax">Tax</option>
+          <option value="Consulting">Consulting</option>
+        </select>
       </div>
 
       {/* Tabs */}

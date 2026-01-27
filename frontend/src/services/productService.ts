@@ -4,7 +4,7 @@ import type { PaginatedResponse } from '../types/pagination';
 
 export const productService = {
   // ============== READ OPERATIONS ==============
-  getProducts: async (skip: number = 0, limit: number = 10, search?: string, isActive?: boolean): Promise<PaginatedResponse<Product>> => {
+  getProducts: async (skip: number = 0, limit: number = 10, search?: string, isActive?: boolean, serviceLine?: string): Promise<PaginatedResponse<Product>> => {
     try {
       const response = await axiosInstance.get<PaginatedResponse<Product>>('/products', {
         params: {
@@ -12,6 +12,7 @@ export const productService = {
           limit,
           ...(search && { search }),
           ...(isActive !== undefined ? { is_active: isActive } : {}),
+          ...(serviceLine && serviceLine !== 'all' && { service_line: serviceLine }),
         },
       });
       return response.data;
