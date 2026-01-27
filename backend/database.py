@@ -1,3 +1,4 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 from typing import Generator
@@ -6,15 +7,15 @@ from typing import Generator
 Base = declarative_base()
 
 # ============== DATABASE CONFIGURATION ==============
-# PostgreSQL connection URL using Docker service name
-DATABASE_URL = "postgresql://admin:admin123@db:5432/sales_management"
-# TODO: Move sensitive credentials to environment variables (.env file) before production
+# 1. Try to get the DB URL from the environment (Render/Production)
+# 2. If not found, fall back to the local Docker URL (Development)
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:admin123@db:5432/sales_management")
 
 # Create engine
 engine = create_engine(
     DATABASE_URL,
-    echo=True,  # Show SQL queries (change to False in production)
-    pool_pre_ping=True,  # Verify connections before using them
+    echo=False,      # Set to False in production to reduce log noise
+    pool_pre_ping=True,  # Verify connections before using them to prevent stale connection errors
 )
 
 # Create sessionmaker
