@@ -57,11 +57,7 @@ const Table = <T extends { id?: number }>({
           {data.map((row, rowIndex) => (
             <tr
               key={row.id || rowIndex}
-              className={`$
-                {rowIndex % 2 === 0 ? 'bg-white' : 'bg-orange-50'}
-              } border-b border-gray-300 hover:bg-orange-100 transition-colors $
-                {onRowClick ? 'cursor-pointer' : ''
-              }`}
+              className={`${rowIndex % 2 === 0 ? 'bg-white' : 'bg-orange-50'} border-b border-gray-300 hover:bg-orange-200 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
               onClick={() => onRowClick?.(row)}
             >
               {columns.map((column, colIndex) => (
