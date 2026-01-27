@@ -5,7 +5,28 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Global scaling: reduce base font size for tighter UI */
+    font-size: 13px;
+  }
+
   .font-serif {
     font-family: 'Crimson Text', serif;
+  }
+
+  /* Compact table padding: keep rows slimmer across the app */
+  .table-fixed th,
+  .table-fixed td {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  /* Compact controls: reduce vertical padding for a denser feel */
+  button,
+  input,
+  select,
+  textarea {
+    padding-top: 0.4rem !important;
+    padding-bottom: 0.4rem !important;
   }
 }

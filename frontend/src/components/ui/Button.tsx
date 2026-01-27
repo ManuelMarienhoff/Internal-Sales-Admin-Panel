@@ -11,7 +11,7 @@ const Button = ({
   className = '',
   ...props
 }: ButtonProps) => {
-  const baseStyles = 'px-6 py-3 font-semibold transition-colors';
+  const baseStyles = 'px-8 py-4 text-base font-bold transition-colors';
   
   const variantStyles = {
     primary: 'bg-pwc-orange text-pwc-black hover:bg-pwc-black hover:text-white',

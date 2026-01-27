@@ -117,9 +117,9 @@ const Orders = () => {
   ];
 
   return (
-    <div className="px-12 py-12">
+    <div className="h-full flex flex-col px-12 py-12">
       {/* Header with Title and Button */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 flex-shrink-0">
         <h1 className="text-4xl font-serif font-bold text-pwc-black">Engagements</h1>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           New Engagement
@@ -127,7 +127,7 @@ const Orders = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
+      <div className="mb-6 flex-shrink-0">
         <SearchBar
           placeholder="Search engagements by ID or client name..."
           onSearch={handleSearch}
@@ -136,15 +136,15 @@ const Orders = () => {
       </div>
 
       {isError && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700">
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 flex-shrink-0">
           Error: {error instanceof Error ? error.message : 'Failed to load engagements'}
         </div>
       )}
 
-      {/* Table and Pagination Container */}
-      <div className="flex flex-col justify-between min-h-[600px]">
-        {/* Table */}
-        <div className={isFetching ? 'opacity-50 transition-opacity' : ''}>
+      {/* Table and Pagination Container - sticky footer with internal scroll */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Table - grows and scrolls internally */}
+        <div className={`flex-1 min-h-0 ${isFetching ? 'opacity-50 transition-opacity' : ''}`}>
           <Table 
             data={data?.items ?? []} 
             columns={columns} 
@@ -153,12 +153,14 @@ const Orders = () => {
           />
         </div>
 
-        {/* Pagination */}
-        <Pagination
-          currentPage={page}
-          totalPages={data?.pages ?? 1}
-          onPageChange={setPage}
-        />
+        {/* Pagination - fixed at bottom of the container */}
+        <div className="flex-shrink-0">
+          <Pagination
+            currentPage={page}
+            totalPages={data?.pages ?? 1}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
 
       {/* Create Order Modal */}
