@@ -41,6 +41,11 @@ const Customers = () => {
 
   const columns: ColumnDef<Customer>[] = [
     {
+      header: 'ID',
+      accessor: 'id',
+      className: 'w-[90px] min-w-[90px]',
+    },
+    {
       header: 'Company',
       accessor: 'company_name',
     },
@@ -56,7 +61,14 @@ const Customers = () => {
       header: 'Contact',
       render: (customer) => `${customer.name} ${customer.last_name}`,
     },
+    {
+      header: 'Contact Email',
+      accessor: 'email',
+      className: 'min-w-[220px]',
+    },
   ];
+
+  const sortedCustomers = (data?.items ?? []).slice().sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
 
   const formFields: FormField[] = [
     {
@@ -116,9 +128,9 @@ const Customers = () => {
   };
 
   return (
-    <div className="px-12 py-12">
+    <div className="h-full flex flex-col px-12 py-12">
       {/* Header with Title and Button */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 flex-shrink-0">
         <h1 className="text-4xl font-serif font-bold text-pwc-black">Customers</h1>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           New Customer
@@ -126,7 +138,7 @@ const Customers = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
+      <div className="mb-6 flex-shrink-0">
         <SearchBar
           placeholder="Search customers by ID, name, or email..."
           onSearch={handleSearch}
@@ -135,29 +147,31 @@ const Customers = () => {
       </div>
 
       {isError && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700">
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 flex-shrink-0">
           Error: {error instanceof Error ? error.message : 'Failed to load customers'}
         </div>
       )}
 
-      {/* Table and Pagination Container */}
-      <div className="flex flex-col justify-between min-h-[600px]">
-        {/* Table */}
-        <div className={isFetching ? 'opacity-50 transition-opacity' : ''}>
+      {/* Table and Pagination Container - flex-1 para ocupar espacio restante */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Table - flex-1 para crecer y permitir scroll interno */}
+        <div className={`flex-1 min-h-0 ${isFetching ? 'opacity-50 transition-opacity' : ''}`}>
           <Table 
-            data={data?.items ?? []} 
+            data={sortedCustomers} 
             columns={columns} 
             emptyMessage="No customers found"
             onRowClick={(customer) => navigate(`/customers/${customer.id}`)}
           />
         </div>
 
-        {/* Pagination */}
-        <Pagination
-          currentPage={page}
-          totalPages={data?.pages ?? 1}
-          onPageChange={setPage}
-        />
+        {/* Pagination - sticky footer */}
+        <div className="flex-shrink-0">
+          <Pagination
+            currentPage={page}
+            totalPages={data?.pages ?? 1}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
 
       {/* Modal */}

@@ -64,44 +64,35 @@ const Products = () => {
     {
       header: 'ID',
       accessor: 'id',
-      className: 'w-16',
+      className: 'w-[90px] min-w-[90px]',
     },
     {
       header: 'Service',
       accessor: 'name',
-      className: 'w-1/4',
+      className: 'w-[28%] min-w-[240px]',
     },
     {
       header: 'Service Line',
-      className: 'w-1/5',
+      className: 'w-[18%] min-w-[140px]',
       render: (product) => renderServiceLineBadge(product.service_line),
     },
     {
       header: 'Price',
-      className: 'w-1/6',
+      className: 'w-[12%] min-w-[110px]',
       render: (product) => (
         <span className="font-semibold">{formatPrice(product.price)}</span>
       ),
     },
     {
       header: 'Description',
-      className: 'w-1/3',
+      className: 'w-[36%] min-w-[300px]',
       render: (product) => (
         <span className="text-gray-700">{product.description || '-'}</span>
       ),
     },
-    {
-      header: 'Status',
-      className: 'w-1/6',
-      render: (product) => (
-        product.is_active ? (
-          <span className="text-green-800 font-medium">Active</span>
-        ) : (
-          <span className="text-gray-600 font-medium">Inactive</span>
-        )
-      ),
-    },
   ];
+
+  const sortedProducts = (data?.items ?? []).slice().sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
 
   const formFields: FormField[] = [
     {
@@ -160,9 +151,9 @@ const Products = () => {
   };
 
   return (
-    <div className="px-12 py-12">
+    <div className="h-full flex flex-col px-12 py-12">
       {/* Header with Title and Button */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 flex-shrink-0">
         <h1 className="text-4xl font-serif font-bold text-pwc-black">Services Catalog</h1>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           New Service
@@ -170,7 +161,7 @@ const Products = () => {
       </div>
 
       {/* Search Bar (global) */}
-      <div className="mb-6">
+      <div className="mb-6 flex-shrink-0">
         <SearchBar
           placeholder="Search services by ID or name..."
           onSearch={handleSearch}
@@ -179,7 +170,7 @@ const Products = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-4 mb-4 border-b border-gray-200">
+      <div className="flex gap-4 mb-4 border-b border-gray-200 flex-shrink-0">
         <button
           type="button"
           disabled={Boolean(searchTerm)}
@@ -209,29 +200,31 @@ const Products = () => {
       </div>
 
       {isError && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700">
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 flex-shrink-0">
           Error: {error instanceof Error ? error.message : 'Failed to load products'}
         </div>
       )}
 
-      {/* Table and Pagination Container */}
-      <div className="flex flex-col justify-between min-h-[600px]">
-        {/* Table */}
-        <div className={isFetching ? 'opacity-50 transition-opacity' : ''}>
+      {/* Table and Pagination Container - flex-1 para ocupar espacio restante */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Table - flex-1 para crecer y permitir scroll interno */}
+        <div className={`flex-1 min-h-0 ${isFetching ? 'opacity-50 transition-opacity' : ''}`}>
           <Table 
-            data={data?.items ?? []} 
+            data={sortedProducts} 
             columns={columns} 
             emptyMessage="No products found"
             onRowClick={(product) => navigate(`/products/${product.id}`)}
           />
         </div>
 
-        {/* Pagination */}
-        <Pagination
-          currentPage={page}
-          totalPages={data?.pages ?? 1}
-          onPageChange={setPage}
-        />
+        {/* Pagination - sticky footer */}
+        <div className="flex-shrink-0">
+          <Pagination
+            currentPage={page}
+            totalPages={data?.pages ?? 1}
+            onPageChange={setPage}
+          />
+        </div>
       </div>
 
       {/* Modal */}

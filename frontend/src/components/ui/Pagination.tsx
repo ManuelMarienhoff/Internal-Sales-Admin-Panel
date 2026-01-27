@@ -64,7 +64,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
   const pages = getPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="flex items-center justify-between border border-gray-200 px-4 py-3 bg-white mt-6 shadow-sm">
+    <div className="flex items-center justify-between border border-gray-200 px-4 py-3 bg-white shadow-sm">
       <div className="text-sm text-gray-600">
         Page {currentPage} of {totalPages}
       </div>

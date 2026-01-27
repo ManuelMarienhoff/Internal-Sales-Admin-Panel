@@ -23,22 +23,22 @@ const Table = <T extends { id?: number }>({
 }: TableProps<T>) => {
   if (data.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-600">
+      <div className="flex items-center justify-center h-full text-gray-600">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto border border-gray-300">
+    <div className="h-full overflow-y-auto overflow-x-auto border border-gray-300">
       <table className="w-full border-collapse table-fixed">
-        {/* Header */}
+        {/* Header - sticky */}
         <thead>
           <tr className="bg-pwc-orange">
             {columns.map((column, idx) => (
               <th
                 key={idx}
-                className={`px-6 py-4 text-left text-pwc-black font-bold ${
+                className={`px-6 py-4 text-left text-pwc-black font-bold sticky top-0 bg-pwc-orange z-10 ${
                   idx < columns.length - 1 ? 'border-r border-white' : ''
                 } ${column.width || ''} ${column.className || ''}`}
               >
@@ -61,12 +61,22 @@ const Table = <T extends { id?: number }>({
               onClick={() => onRowClick?.(row)}
             >
               {columns.map((column, colIndex) => (
-                <td key={colIndex} className="px-6 py-4 text-pwc-black">
-                  {column.render
-                    ? column.render(row, rowIndex)
-                    : column.accessor
-                    ? String(row[column.accessor] || '-')
-                    : '-'}
+                <td 
+                  key={colIndex} 
+                  className="px-6 py-4 text-pwc-black align-middle"
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <div className="overflow-hidden text-ellipsis">
+                    {column.render
+                      ? column.render(row, rowIndex)
+                      : column.accessor
+                      ? String(row[column.accessor] || '-')
+                      : '-'}
+                  </div>
                 </td>
               ))}
             </tr>
