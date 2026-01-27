@@ -7,85 +7,87 @@ interface PaginationProps {
 }
 
 const getPageNumbers = (current: number, total: number) => {
-  const maxVisibleButtons = 5;
-
-  // If total pages fit within max visible, show all
-  if (total <= maxVisibleButtons) {
+  // Small totals: show everything without truncation
+  if (total <= 6) {
     return Array.from({ length: total }, (_, i) => i + 1);
-  }
-
-  // Calculate ideal range centered on current page
-  let start = current - 2;
-  let end = current + 2;
-
-  // Clamping: Adjust if out of bounds
-  if (start < 1) {
-    start = 1;
-    end = maxVisibleButtons;
-  } else if (end > total) {
-    end = total;
-    start = total - maxVisibleButtons + 1;
   }
 
   const pages: (number | 'ellipsis')[] = [];
 
-  // Add first page and ellipsis if there's a gap
-  if (start > 1) {
-    pages.push(1);
-    if (start > 2) {
-      pages.push('ellipsis');
-    }
+  const leftNeighbor = Math.max(2, current - 1);
+  const rightNeighbor = Math.min(total - 1, current + 1);
+
+  pages.push(1);
+
+  if (leftNeighbor > 2) {
+    pages.push('ellipsis');
   }
 
-  // Add the visible range
-  for (let i = start; i <= end; i += 1) {
+  for (let i = leftNeighbor; i <= rightNeighbor; i += 1) {
     pages.push(i);
   }
 
-  // Add ellipsis and last page if there's a gap
-  if (end < total) {
-    if (end < total - 1) {
-      pages.push('ellipsis');
-    }
-    pages.push(total);
+  if (rightNeighbor < total - 1) {
+    pages.push('ellipsis');
   }
+
+  pages.push(total);
 
   return pages;
 };
 
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
-  if (totalPages <= 1) return null;
-
   const handleChange = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage) return;
     onPageChange(page);
   };
 
+  // Caso de página única: solo mostrar indicador
+  if (totalPages <= 1) {
+    return (
+      <div className="flex items-center justify-between border border-gray-200 px-4 py-3 bg-white shadow-sm">
+        <div className="text-sm text-gray-600">
+          Page 1 of 1
+        </div>
+      </div>
+    );
+  }
+
   const pages = getPageNumbers(currentPage, totalPages);
+
+  const navBtn = 'h-10 px-4 flex items-center justify-center border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white';
+  const pageBtnBase = 'w-10 h-10 flex items-center justify-center text-sm border';
+  const pageBtn = `${pageBtnBase} border-gray-300 text-gray-700 hover:bg-gray-50`;
+  const pageBtnActive = `${pageBtnBase} bg-black text-white border-black`;
 
   return (
     <div className="flex items-center justify-between border border-gray-200 px-4 py-3 bg-white shadow-sm">
+      {/* Elemento Izquierdo - Indicador de Página */}
       <div className="text-sm text-gray-600">
         Page {currentPage} of {totalPages}
       </div>
+
+      {/* Elemento Derecho - Controles Agrupados */}
       <div className="flex items-center gap-2">
+        {/* Previous Button */}
         <button
           type="button"
-          className="px-3 py-1 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+          className={navBtn}
           onClick={() => handleChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
           Previous
         </button>
 
+        {/* Números de Página */}
         {pages.map((page, idx) => (
           page === 'ellipsis' ? (
-            <span key={`ellipsis-${idx}`} className="px-2 text-gray-500">...</span>
+            <span key={`ellipsis-${idx}`} className="w-10 h-10 flex items-center justify-center text-gray-500">...</span>
           ) : (
             <button
               key={page}
               type="button"
-              className={`px-3 py-1 text-sm border ${page === currentPage ? 'bg-black text-white border-black' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+              className={page === currentPage ? pageBtnActive : pageBtn}
               onClick={() => handleChange(page)}
             >
               {page}
@@ -93,9 +95,10 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
           )
         ))}
 
+        {/* Next Button */}
         <button
           type="button"
-          className="px-3 py-1 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+          className={navBtn}
           onClick={() => handleChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
