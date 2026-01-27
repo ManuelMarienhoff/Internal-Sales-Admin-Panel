@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import pwcLogo from '../assets/pwc_logo.png';
 
 interface LayoutProps {
   children: ReactNode;
@@ -23,10 +24,15 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-300 flex flex-col">
         {/* Logo/Title */}
-        <div className="px-8 py-6 border-b border-gray-300">
-          <h1 className="text-2xl font-serif font-bold text-pwc-black">
-            PwC Sales
-          </h1>
+        <div className="pl-6 pt-6 pb-2 border-b border-gray-300">
+          <Link to="/" className="block">
+            <img 
+              src={pwcLogo} 
+              alt="PwC" 
+              style={{ width: '130px', height: 'auto' }}
+              className="hover:opacity-80 transition-opacity"
+            />
+          </Link>
         </div>
 
         {/* Navigation Links */}
