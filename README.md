@@ -4,6 +4,7 @@
 
 ## 1. System Description
 This project is a **Full-Stack B2B management application** specifically designed to align with the **PricewaterhouseCoopers (PwC)** ecosystem, modeling an **internal sales workflow** where orders are created by internal users to register and manage sales that happen outside of the system, such as through direct contact with customers.
+**Target Device:** Desktop / Laptop. The UI is optimized for large screens to handle complex data grids and dashboards efficiently.
 
 This tool has been modeled to reflect the firm's operational reality:
 * **Business Model:** We do not sell quantity-based products, but high-value **Engagements** 
