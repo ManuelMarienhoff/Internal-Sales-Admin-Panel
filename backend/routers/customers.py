@@ -17,9 +17,26 @@ router = APIRouter(
 # ==========================================
 @router.post("/", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
 def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
-    # --- DEBUG PRINT ---
-    print(f"👀 RECIBIDO EN BACKEND: {customer.model_dump()}")
-    """Create a new customer"""
+    """
+    Register a new corporate client with unique email validation.
+    
+    Business Logic:
+    1. Enforces email uniqueness to prevent duplicate accounts and maintain data integrity.
+       Each customer should have a single, unique email address in the system to ensure
+       proper communication and transaction tracking.
+    2. Creates customer record with company metadata (company_name, industry, name, last_name).
+    3. All customer information is indexed for efficient searching and filtering.
+    
+    Args:
+        customer: Customer creation request with company details and contact information
+        db: Database session
+    
+    Returns:
+        CustomerResponse: Created customer with auto-generated ID and timestamp
+    
+    Raises:
+        HTTPException: 400 if email already exists (duplicate customer)
+    """
     # Check if email already exists
     existing_customer = db.query(Customer).filter(Customer.email == customer.email).first()
     if existing_customer:
@@ -135,7 +152,7 @@ def update_customer(customer_id: int, customer_update: CustomerUpdate, db: Sessi
 def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     """
     Delete a customer from the database.
-    Note: It is not possible to delete a customer that has associated orders.
+    Note: Prevents deletion of customers with active historical records (orders) to avoid orphaned data
     """
     db_customer = db.query(Customer).filter(Customer.id == customer_id).first()
     if not db_customer:

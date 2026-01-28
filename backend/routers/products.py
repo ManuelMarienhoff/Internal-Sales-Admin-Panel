@@ -194,13 +194,34 @@ def update_product(product_id: int, product_update: ProductUpdate, db: Session =
 @router.delete("/{product_id}", response_model=dict, status_code=status.HTTP_200_OK)
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     """
-    Hybrid intelligent deletion logic:
+    Intelligent deletion with referential integrity protection using Soft Delete pattern.
     
-    1. DRAFT CLEANUP: Removes product from all draft orders and recalculates totals.
-    2. INTEGRITY CHECK: Verifies if product exists in confirmed/completed orders.
+    Design Decision: Performs Smart Soft Delete (hybrid approach):
+    - This endpoint marks services as inactive or performs permanent deletion based on historical data.
+    - If the service appears in confirmed/completed orders (historical data), it is marked as
+      inactive (soft delete) to preserve referential integrity and maintain complete audit trails.
+    - If the service has no historical orders, it is permanently deleted (hard delete) to keep
+      the database clean.
+    
+    Execution Steps:
+    1. DRAFT CLEANUP: Removes the product from all draft orders and recalculates their totals.
+       This ensures draft orders remain valid and consistent.
+    2. INTEGRITY CHECK: Queries the database to determine if this product exists in any
+       confirmed or completed orders (historical business transactions).
     3. DELETION DECISION:
-       - If in confirmed/completed orders: Deactivate (soft delete)
-       - If not in historical orders: Permanent deletion (hard delete)
+       - If historical orders exist: Soft Delete (is_active=False) to preserve audit trails
+       - If no historical orders: Hard Delete (permanent removal) for database hygiene
+    
+    Args:
+        product_id: ID of the product to delete
+        db: Database session
+    
+    Returns:
+        dict: Response indicating action taken ('deactivated' or 'deleted'),
+              affected draft orders, and affected product ID
+    
+    Raises:
+        HTTPException: 404 if product not found, 500 if unexpected error occurs
     """
     try:
         # Step 0: Verify product exists

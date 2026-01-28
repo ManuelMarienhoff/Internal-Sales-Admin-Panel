@@ -35,6 +35,8 @@ class Product(Base):
     description = Column(String(500))
     # Use Numeric for decimal precision (avoid rounding errors with float)
     price = Column(Numeric(10, 2), nullable=False)
+    # Design Decision: We use a 'Soft Delete' pattern (is_active flag) instead of physical deletion.
+    # This ensures that historical Orders referencing this Service remain valid even if the Service is discontinued.
     is_active = Column(Boolean, default=True, nullable=False)  # True = active, False = inactive
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
@@ -59,6 +61,8 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     customer_id = Column(Integer, ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True)
     status = Column(Enum(OrderStatus), default=OrderStatus.DRAFT, nullable=False)
+    # Design Decision: Used DECIMAL(12, 2) instead of Float to ensure financial precision
+    # and avoid floating-point arithmetic errors in currency calculations.
     total_amount = Column(Numeric(12, 2), default=0, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     

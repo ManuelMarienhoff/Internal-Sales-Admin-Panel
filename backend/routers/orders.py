@@ -19,11 +19,26 @@ router = APIRouter(
 @router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     """
-    Create a new order with items.
-    - Validates customer exists
-    - Fetches current product prices and freezes them
-    - Calculates total amount automatically
-    - Rolls back transaction if any product is invalid or inactive
+    Create a new order with items and apply business logic validation.
+    
+    Business Logic:
+    1. Validates that the Customer exists and is retrievable from the database.
+    2. Validates that each Service (Product) exists and is active.
+    3. Implements Price Snapshot pattern: Freezes the current price of each service
+       at the time of purchase. This ensures that future catalog price changes do not
+       retroactively affect past orders, maintaining historical accuracy and revenue integrity.
+    4. Calculates total_amount automatically by summing frozen prices.
+    5. Rolls back entire transaction if any product is missing or inactive, ensuring data consistency.
+    
+    Args:
+        order: Order creation request with customer_id and list of items (product_id)
+        db: Database session
+    
+    Returns:
+        OrderResponse: Created order with DRAFT status and calculated total_amount
+    
+    Raises:
+        HTTPException: 404 if customer/product not found, 400 if product inactive
     """
     # 1. Verify customer exists
     customer = db.query(Customer).filter(Customer.id == order.customer_id).first()
@@ -162,9 +177,27 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
 @router.patch("/{order_id}", response_model=OrderResponse)
 def update_order_status(order_id: int, order_update: OrderUpdate, db: Session = Depends(get_db)):
     """
-    Update order status or items with business logic validation.
-    - Only draft orders can have items edited
-    - Any order can have status updated if transitioning to valid next status
+    Update order status or items with state machine validation and revenue protection.
+    
+    Business Logic:
+    1. Items Editing: Only Draft orders can have items modified. Confirmed/Completed orders
+       are immutable to maintain audit trails and prevent accidental data loss.
+    2. Status Transitions: Enforces strict state machine (Draft => Confirmed => Completed).
+       Prevents invalid transitions (e.g., reverting Completed orders to Draft) to protect
+       revenue recognition and financial reporting accuracy.
+    3. Product Validation: Before transitioning to Confirmed status, verifies that all
+       products in the order are still active. Inactive products must be removed before confirmation.
+    
+    Args:
+        order_id: ID of the order to update
+        order_update: Update payload with optional items list and/or status field
+        db: Database session
+    
+    Returns:
+        OrderResponse: Updated order with new status and recalculated totals
+    
+    Raises:
+        HTTPException: 400 if invalid state transition or validation failure
     """
     db_order = db.query(Order).filter(Order.id == order_id).first()
     if not db_order:
